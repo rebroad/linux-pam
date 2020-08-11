@@ -4,6 +4,7 @@ pam (1.4.0-1) UNRELEASED; urgency=medium
     - Stop using obsoleted selinux headers.  Closes: #956355.
   * Drop patches to implement "nullok_secure" option for pam_unix.
     Closes: #674857, #936071, LP: #1860826.
+  * debian/patches-applied/cve-2010-4708.patch: drop, applied upstream.
 
  -- Steve Langasek <vorlon@debian.org>  Tue, 11 Aug 2020 14:58:13 -0700
 
