@@ -29,6 +29,7 @@ override_dh_auto_configure:
 	dh_auto_configure -- --enable-static --enable-shared \
 		--libdir=/lib/$(DEB_HOST_MULTIARCH) \
 		--enable-isadir=/lib/security \
+		--enable-cracklib \
 		$(CONFIGURE_OPTS)
 
 # .install files don't have "except for" handling, so we need to exclude

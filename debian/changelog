@@ -2,6 +2,8 @@ pam (1.4.0-1) UNRELEASED; urgency=medium
 
   * New upstream release.  Closes: #948188.
     - Stop using obsoleted selinux headers.  Closes: #956355.
+    - Continue building pam_cracklib, which is deprecated upstream;
+      the replacement, pam_passwdqc, is packaged separately.
   * Drop patches to implement "nullok_secure" option for pam_unix.
     Closes: #674857, #936071, LP: #1860826.
   * debian/patches-applied/cve-2010-4708.patch: drop, applied upstream.
