@@ -3,9 +3,9 @@ Default: yes
 Priority: 256
 Auth-Type: Primary
 Auth:
-	[success=end default=ignore]	pam_unix.so nullok_secure try_first_pass
+	[success=end default=ignore]	pam_unix.so nullok try_first_pass
 Auth-Initial:
-	[success=end default=ignore]	pam_unix.so nullok_secure
+	[success=end default=ignore]	pam_unix.so nullok
 Account-Type: Primary
 Account:
 	[success=end new_authtok_reqd=done default=ignore]	pam_unix.so

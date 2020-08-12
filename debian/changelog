@@ -7,6 +7,7 @@ pam (1.4.0-1) UNRELEASED; urgency=medium
   * debian/patches-applied/cve-2010-4708.patch: drop, applied upstream.
   * debian/patches-applied/nullok_secure-compat.patch: Support
     nullok_secure as a deprecated alias for nullok.
+  * debian/pam-configs/unix: use nullok, not nullok_secure.
 
  -- Steve Langasek <vorlon@debian.org>  Tue, 11 Aug 2020 14:58:13 -0700
 
