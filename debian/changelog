@@ -8,6 +8,8 @@ pam (1.4.0-1) UNRELEASED; urgency=medium
   * debian/patches-applied/nullok_secure-compat.patch: Support
     nullok_secure as a deprecated alias for nullok.
   * debian/pam-configs/unix: use nullok, not nullok_secure.
+  * Drop pam_tally and pam_tally2 modules, which have been deprecated
+    upstream in favor of pam_faillock.  Closes: #569746, LP: #772121.
 
  -- Steve Langasek <vorlon@debian.org>  Tue, 11 Aug 2020 14:58:13 -0700
 
