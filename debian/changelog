@@ -1,4 +1,4 @@
-pam (1.4.0-1) UNRELEASED; urgency=medium
+pam (1.4.0-1) unstable; urgency=medium
 
   * New upstream release.  Closes: #948188.
     - Stop using obsoleted selinux headers.  Closes: #956355.
@@ -16,7 +16,7 @@ pam (1.4.0-1) UNRELEASED; urgency=medium
     upstream in favor of pam_faillock.  Closes: #569746, LP: #772121.
   * Add hardening+=bindnow to build options, per lintian.
 
- -- Steve Langasek <vorlon@debian.org>  Tue, 11 Aug 2020 14:58:13 -0700
+ -- Steve Langasek <vorlon@debian.org>  Mon, 28 Dec 2020 06:05:13 +0000
 
 pam (1.3.1-5) unstable; urgency=medium
 
