@@ -7,7 +7,7 @@ if [ "$1" = "purge" ]; then
 	rm -f /var/lib/pam/auth /var/lib/pam/account /var/lib/pam/session \
 	      /var/lib/pam/password /var/lib/pam/seen \
 	      /var/lib/pam/session-noninteractive
-	rmdir --ignore-fail-on-non-empty /var/lib/pam
+	rmdir --ignore-fail-on-non-empty /var/lib/pam ||true
 fi
 
 #DEBHELPER#
