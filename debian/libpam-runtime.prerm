@@ -1,8 +1,10 @@
 #!/bin/sh
 
 set -e
-
-if [ "$1" = remove ]; then
+# If libpam-runtime is being removed, which requires
+# --force-remove-essential, don't generate an infinite loop with lack
+# of profiles.  
+if [ "$1" = remove ] && [ "$2" != "" ]; then
 	pam-auth-update --package --remove unix
 fi
 
