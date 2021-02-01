@@ -1,3 +1,19 @@
+pam (1.4.0-3) UNRELEASED; urgency=medium
+
+  [ Josh Triplett ]
+  * libpam-runtime.postrm: Remove session-noninteractive files on purge,
+    Closes: #978601
+
+  [ Sam Hartman ]
+  * libpam-modules.install: Install pam_faillock binaries, Closes: #981092
+  * debian/patches-applied/pam_unix_initialize_daysleft : Initialize days before password expire, Closes: #980285
+  * pam-configs/unix: Default to yescript rather than sha512.  From a theoretical security standpoint, it looks like yescript has similar security properties, assuming (as we typically do in the crypto protocol community) that sha256 is still reasonable.  However, in terms of practical resistant to password cracking, particularly in terms of valuing space complexity as well as time complexity, yescript is superior, Closes: #978553
+  * No infinite loop on purge of libpam-runtime, Closes: #977648
+  * patches-applied/pam_faillock_create_directory: create /run/faillock when needed.
+  
+
+ -- Sam Hartman <hartmans@debian.org>  Mon, 01 Feb 2021 15:27:08 -0500
+
 pam (1.4.0-2) unstable; urgency=medium
 
   * Restart services on upgrade to 1.4.0.  Closes: #978555.
