@@ -5,6 +5,8 @@ pam (1.4.0-3) UNRELEASED; urgency=medium
     Closes: #978601
 
   [ Sam Hartman ]
+  * patches-applied/pam_mkhomedir_stat_before_opendir: Stat the skeleton
+    directory before opendir, Closes: #834589
   * libpam-modules.install: Install pam_faillock binaries, Closes: #981092
   * debian/patches-applied/pam_unix_initialize_daysleft : Initialize days before password expire, Closes: #980285
   * pam-configs/unix: Default to yescript rather than sha512.  From a theoretical security standpoint, it looks like yescript has similar security properties, assuming (as we typically do in the crypto protocol community) that sha256 is still reasonable.  However, in terms of practical resistant to password cracking, particularly in terms of valuing space complexity as well as time complexity, yescript is superior, Closes: #978553
