@@ -21,3 +21,5 @@ lib_security_multiarch_compat
 pam-limits-nofile-fd-setsize-cap
 fix-autoreconf.patch
 nullok_secure-compat.patch
+
+pam_unix_initialize_daysleft
