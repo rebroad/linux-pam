@@ -1,3 +1,11 @@
+pam (1.4.0-4) unstable; urgency=medium
+
+  * Document in README.source how to avoid multi-arch problems with documentation, Closes: #851650
+  * Update header to common-password talking about sha512
+  * The fix for  #977648 incorrectly assumed how prerm scripts are called; update.
+
+ -- Sam Hartman <hartmans@debian.org>  Wed, 03 Feb 2021 12:35:12 -0500
+
 pam (1.4.0-3) unstable; urgency=medium
 
   [ Josh Triplett ]
