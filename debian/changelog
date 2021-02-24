@@ -1,3 +1,10 @@
+pam (1.4.0-5) unstable; urgency=medium
+
+  * Remove profiles containing pam_tally or pam_tally2 since we no longer
+    build them.
+
+ -- Sam Hartman <hartmans@debian.org>  Wed, 24 Feb 2021 14:11:06 -0500
+
 pam (1.4.0-4) unstable; urgency=medium
 
   * Document in README.source how to avoid multi-arch problems with documentation, Closes: #851650

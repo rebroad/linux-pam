@@ -7,3 +7,12 @@ _Description: xscreensaver and xlockmore must be restarted before upgrading
  authenticate to these programs.  You should arrange for these programs
  to be restarted or stopped before continuing this upgrade, to avoid
  locking your users out of their current sessions.
+
+Template: libpam-modules/profiles-disabled
+Type: error
+_Description: PAM Profiles with Deprecated Modules Disabled
+ Your system had PAM profiles enabled with the ${modules} PAM
+ modules. These modules have been removed from PAM. Leaving these PAM
+ profiles enabled would prevent users from accessing your system. As a
+ result, these profiles have been disabled.
+ 
