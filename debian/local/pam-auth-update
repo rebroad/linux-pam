@@ -53,6 +53,7 @@ my %md5sums = (
 		'9ba753d0824276b44bcadfee1f87b6bc',
 	],
 	'session' => [
+        'f297c731a467822cbd86e1283263e8a3',
 		'240fb92986c885b327cdb21dd641da8c',
 		'4a25673e8b36f1805219027d3be02cd2',
 	],
