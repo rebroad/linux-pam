@@ -1,9 +1,20 @@
-pam (1.4.0-5) unstable; urgency=medium
+pam (1.4.0-5) unstable; urgency=low
 
   * Remove profiles containing pam_tally or pam_tally2 since we no longer
     build them.
+  * Also, fail to permit profiles to be selected that include pam_tally
+    once the new pam-auth-update is installed
+  * Check for any user-added references to pam_tally and halt the upgrade,
+    Closes: #982530
+  * Handle services with systemd units but no init scripts, Closes: #982295
+  * Register md5sum for new common-password template, Closes: #982898
+  * After reading pam-auth-update source, I agree with Lucas Nussbaum
+    that common-session is intended only for interactive sessions.
+    Otherwise pam-auth-update should not duplicate module configurations
+    between common-session-noninteractive and common-session, so update
+    the documentation, Closes: #982297
 
- -- Sam Hartman <hartmans@debian.org>  Wed, 24 Feb 2021 14:11:06 -0500
+ -- Sam Hartman <hartmans@debian.org>  Thu, 25 Feb 2021 15:48:22 -0500
 
 pam (1.4.0-4) unstable; urgency=medium
 
