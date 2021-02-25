@@ -15,4 +15,14 @@ _Description: PAM Profiles with Deprecated Modules Disabled
  modules. These modules have been removed from PAM. Leaving these PAM
  profiles enabled would prevent users from accessing your system. As a
  result, these profiles have been disabled.
- 
+
+Template: libpam-modules/deprecate-tally
+Type: error
+_Description: you are using pam_Tally or pam_tally2 in your configuration
+ The pam_tally and pam_tally2 modules have been removed from PAM. You
+ are using one of these modules in your PAM configuration in
+ /etc/pam.d. You must remove the uses of these modules before PAM can
+ be upgraded; including these modules in your PAM configuration after
+ the upgrade will stop users from being able to log into the system.
+ .
+ Consider the pam_faillock module as a replacement for pam_tally.
