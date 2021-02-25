@@ -59,11 +59,15 @@ my %md5sums = (
 		'ad2b78ce1498dd637ef36469430b6ac6',
 	],
 );
+my @invalid_modules = ('pam_tally');
 
 opendir(DIR, $inputdir) || die "could not open config directory: $!";
 while (my $profile = readdir(DIR)) {
 	next if ($profile eq '.' || $profile eq '..' || $profile =~ m/~$/ || $profile =~ m/^#.+#$/);
 	%{$profiles{$profile}} = parse_pam_profile($inputdir . '/' . $profile);
+        if (defined $profiles{$profile}{'disabled'} and $profiles{$profile}{'disabled'}) {
+          delete $profiles{$profile};
+        }
 }
 closedir DIR;
 
@@ -702,6 +706,9 @@ sub parse_pam_profile
 			s/^\s+//;
 			s/\s+$//;
 			$profile{$fieldname} .= "\n$_" if ($_);
+                        if (grep { $profile{$fieldname} =~ /$_/} @invalid_modules) {
+                          $profile{'disabled'} = 1;
+                        }
 			$profile{$fieldname} =~ s/^[\n\s]+//;
 		}
 	}
