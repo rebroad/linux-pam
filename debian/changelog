@@ -1,3 +1,11 @@
+pam (1.4.0-6) unstable; urgency=medium
+
+  * Clearly it's been too long since I've done debconf; run
+    debconf-updatepo so the translations will show up as needing
+    translating.
+
+ -- Sam Hartman <hartmans@debian.org>  Fri, 26 Feb 2021 10:48:23 -0500
+
 pam (1.4.0-5) unstable; urgency=low
 
   * Remove profiles containing pam_tally or pam_tally2 since we no longer
