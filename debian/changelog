@@ -2,6 +2,7 @@ pam (1.4.0-7) UNRELEASED; urgency=medium
 
   * Updated portuguese debconf translation, thanks Pedro Ribeiro, Closes:
     #983594
+  * Updated Simplified Chinese Translations, thanks Boyuan Yang
 
  -- Sam Hartman <hartmans@debian.org>  Fri, 26 Feb 2021 16:29:32 -0500
 
