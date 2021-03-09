@@ -4,6 +4,8 @@ pam (1.4.0-7) UNRELEASED; urgency=medium
     #983594
   * Updated Simplified Chinese Translations, thanks Boyuan Yang
   * Updated Bulgarian Translation, Thanks Damyan Ivanov
+  * Updated translation from the Slovak team, thanks Ladislav Michnovič
+  * New Catalan translation, thanks Alex Muntada, Closes: #984568
 
  -- Sam Hartman <hartmans@debian.org>  Fri, 26 Feb 2021 16:29:32 -0500
 
