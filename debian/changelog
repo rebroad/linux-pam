@@ -16,8 +16,17 @@ pam (1.4.0-7) UNRELEASED; urgency=medium
   * Updated Dutch debconf templates, Thanks Frans Spiesschaert, Closes:
     #984823
       * Updated German Debconf translations, Thanks Sven Joachim
-
- -- Sam Hartman <hartmans@debian.org>  Fri, 26 Feb 2021 16:29:32 -0500
+  * Code review fixes for the fix to #982295, thanks Mark Hindley
+    - Actually set service to $1 rather than happening to use a variable
+      of the same name in enclosing scope
+    - Remove dead code setting idl when not used
+  * Code review fixes to the fix for #982530, thanks Martin Schurz
+    - Include '-' in the file matching regexp so we search
+    /etc/pam.d/common-* for uses of pam_tally.  The profile check will
+      catch this unless the user has overwridden the configuration
+    - Fix capitalization of pam_Tally in debconf description
+  
+ -- Sam Hartman <hartmans@debian.org>  Mon, 15 Mar 2021 15:01:55 -0400
 
 pam (1.4.0-6) unstable; urgency=medium
 
