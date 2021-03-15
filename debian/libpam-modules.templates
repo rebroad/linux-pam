@@ -18,7 +18,7 @@ _Description: PAM Profiles with Deprecated Modules Disabled
 
 Template: libpam-modules/deprecate-tally
 Type: error
-_Description: you are using pam_Tally or pam_tally2 in your configuration
+_Description: you are using pam_tally or pam_tally2 in your configuration
  The pam_tally and pam_tally2 modules have been removed from PAM. You
  are using one of these modules in your PAM configuration in
  /etc/pam.d. You must remove the uses of these modules before PAM can

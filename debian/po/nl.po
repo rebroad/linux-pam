@@ -260,8 +260,8 @@ msgstr ""
 #. Type: error
 #. Description
 #: ../libpam-modules.templates:3001
-msgid "you are using pam_Tally or pam_tally2 in your configuration"
-msgstr "u gebruikt in uw configuratie pam_Tally of pam_tally2"
+msgid "you are using pam_tally or pam_tally2 in your configuration"
+msgstr "u gebruikt in uw configuratie pam_tally of pam_tally2"
 
 #. Type: error
 #. Description

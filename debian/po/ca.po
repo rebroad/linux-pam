@@ -261,8 +261,8 @@ msgstr ""
 #. Type: error
 #. Description
 #: ../libpam-modules.templates:3001
-msgid "you are using pam_Tally or pam_tally2 in your configuration"
-msgstr "esteu utilitzant pam_Tally o pam_tally2 a la vostra configuració"
+msgid "you are using pam_tally or pam_tally2 in your configuration"
+msgstr "esteu utilitzant pam_tally o pam_tally2 a la vostra configuració"
 
 #. Type: error
 #. Description
