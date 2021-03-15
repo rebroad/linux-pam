@@ -15,7 +15,8 @@ pam (1.4.0-7) UNRELEASED; urgency=medium
     #984878
   * Updated Dutch debconf templates, Thanks Frans Spiesschaert, Closes:
     #984823
-    
+      * Updated German Debconf translations, Thanks Sven Joachim
+
  -- Sam Hartman <hartmans@debian.org>  Fri, 26 Feb 2021 16:29:32 -0500
 
 pam (1.4.0-6) unstable; urgency=medium
