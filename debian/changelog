@@ -1,4 +1,4 @@
-pam (1.4.0-7) UNRELEASED; urgency=medium
+pam (1.4.0-7) unstable; urgency=medium
 
   * Updated portuguese debconf translation, thanks Pedro Ribeiro, Closes:
     #983594
@@ -25,7 +25,8 @@ pam (1.4.0-7) UNRELEASED; urgency=medium
     /etc/pam.d/common-* for uses of pam_tally.  The profile check will
       catch this unless the user has overwridden the configuration
     - Fix capitalization of pam_Tally in debconf description
-  
+
+
  -- Sam Hartman <hartmans@debian.org>  Mon, 15 Mar 2021 15:01:55 -0400
 
 pam (1.4.0-6) unstable; urgency=medium
