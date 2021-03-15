@@ -9,6 +9,8 @@ pam (1.4.0-7) UNRELEASED; urgency=medium
   * Updated Catalan translation, thanks Alex Muntada, Closes: #984568
   * Updated Brazilian Portuguese translation, Thanks  Adriano Rafael Gomes,
     Closes: #984656
+  * French Debconf translations, thanks  Jean-Pierre Giraud    , Closes:
+    #984910
 
  -- Sam Hartman <hartmans@debian.org>  Fri, 26 Feb 2021 16:29:32 -0500
 
