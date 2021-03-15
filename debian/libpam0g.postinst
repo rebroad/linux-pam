@@ -65,9 +65,10 @@ if test -d /run/systemd/system; then
     }
 else # not systemd
     is_service_configured() {
+        service="$1"
 	idl="/etc/init.d/${service}"
 	if [ -n "$idl" ] && [ -x $idl ]; then
-return 0
+	    return 0
 	else
             return 1
         fi
@@ -111,7 +112,6 @@ fi
     )
 
     for service in $check; do
-	idl="/etc/init.d/${service}"
 	if is_service_configured $service; then
 		services="$service $services"
 	else
