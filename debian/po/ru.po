@@ -11,7 +11,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pam 1.4.0-6\n"
 "Report-Msgid-Bugs-To: pam@packages.debian.org\n"
-"POT-Creation-Date: 2021-02-26 10:32-0500\n"
+"POT-Creation-Date: 2021-03-15 18:23-0400\n"
 "PO-Revision-Date: 2021-03-07 19:17+0300\n"
 "Last-Translator: Алексей Шилин <shilin.aleksej@gmail.com>\n"
 "Language-Team: русский <debian-l10n-russian@lists.debian.org>\n"
@@ -32,11 +32,6 @@ msgstr "Службы, которые будут перезапущены пос�
 #. Type: string
 #. Description
 #: ../libpam0g.templates:1001
-#| msgid ""
-#| "Most services that use PAM need to be restarted to use modules built for "
-#| "this new version of libpam.  Please review the following space-separated "
-#| "list of init.d scripts for services to be restarted now, and correct it "
-#| "if needed."
 msgid ""
 "Most services that use PAM need to be restarted to use modules built for "
 "this new version of libpam.  Please review the following space-separated "

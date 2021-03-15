@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pam\n"
 "Report-Msgid-Bugs-To: pam@packages.debian.org\n"
-"POT-Creation-Date: 2021-02-26 10:32-0500\n"
+"POT-Creation-Date: 2021-03-15 18:23-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -208,7 +208,7 @@ msgstr ""
 #. Type: error
 #. Description
 #: ../libpam-modules.templates:3001
-msgid "you are using pam_Tally or pam_tally2 in your configuration"
+msgid "you are using pam_tally or pam_tally2 in your configuration"
 msgstr ""
 
 #. Type: error
