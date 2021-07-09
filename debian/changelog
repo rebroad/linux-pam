@@ -1,3 +1,15 @@
+pam (1.4.0-8) unstable; urgency=high
+
+  [ Hideki Yamane ]
+  * debian/patches-applied/lib_security_multiarch_compat
+    - Fix regression introduced in 1.4.0-1: search both /lib/security and
+    /lib/[multiarch_tripple]/security/, Closes: #990790
+
+  [ Sam Hartman ]
+  * Reword changelog
+
+ -- Hideki Yamane <henrich@debian.org>  Tue, 06 Jul 2021 22:09:15 +0900
+
 pam (1.4.0-7) unstable; urgency=medium
 
   * Updated portuguese debconf translation, thanks Pedro Ribeiro, Closes:
