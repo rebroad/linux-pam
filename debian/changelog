@@ -7,6 +7,10 @@ pam (1.4.0-8) unstable; urgency=high
 
   [ Sam Hartman ]
   * Reword changelog
+  * Prefer the multiarch path (_PAM_ISA) to the non-multiarch path.
+    That's different than buster, but  guarantees everything already
+    working in bullseye will continue to work and also guarantees that
+    when multiarch modules are available we use them.
 
  -- Hideki Yamane <henrich@debian.org>  Tue, 06 Jul 2021 22:09:15 +0900
 
