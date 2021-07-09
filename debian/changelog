@@ -1,3 +1,20 @@
+pam (1.4.0-9) unstable; urgency=medium
+
+  * Revert prefer the multiarch path from 1.4.0-8: It turns out that
+    Debian uses DEFAULT_MODULE_PATH and _PAM_ISA in the opposite meaning
+    of upstream.  If I had read the patch header of
+    patches-applied/lib_security_multiarch_compat more closely I would
+    have noticed this.  The effect of 1.4.0-9 is what is stated in the
+    1.4.0-8 changelog: we prefer multiarch paths, but the original patch
+    did that.
+  * I did test this in 1.4.0-8, but my test design was flawed.  I placed a
+    invalid shared object in /lib/security and confirmed it did not shadow
+    an object in /lib/x86_64-linux-gnu/security.  However I realized
+    shortly after releasing 1.4.0-8 that a valid shared object in
+    /lib/security will shadow one in the multiarch path.
+
+ -- Sam Hartman <hartmans@debian.org>  Fri, 09 Jul 2021 10:55:02 -0600
+
 pam (1.4.0-8) unstable; urgency=high
 
   [ Hideki Yamane ]

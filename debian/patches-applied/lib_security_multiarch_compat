@@ -24,16 +24,16 @@ Index: pam-1.4.0/libpam/pam_handlers.c
 +	    mod->dl_handle = _pam_dlopen(mod_path);
 +	} else {
 +	    char *mod_full_path = NULL;
-+	    if (asprintf(&mod_full_path, "%s/%s",
-+	                 _PAM_ISA, mod_path) >= 0) {
++	    if (asprintf(&mod_full_path, "%s%s",
++	                 DEFAULT_MODULE_PATH, mod_path) >= 0) {
 +		mod->dl_handle = _pam_dlopen(mod_full_path);
 +		_pam_drop(mod_full_path);
 +	    } else {
 +		pam_syslog(pamh, LOG_CRIT, "cannot malloc full mod path");
 +	    }
 +           if (!mod->dl_handle) {
-+               if (asprintf(&mod_full_path, "%s%s",
-+                            DEFAULT_MODULE_PATH, mod_path) >= 0) {
++               if (asprintf(&mod_full_path, "%s/%s",
++                            _PAM_ISA, mod_path) >= 0) {
 +                   mod->dl_handle = _pam_dlopen(mod_full_path);
 +                   _pam_drop(mod_full_path);
 +               } else {
