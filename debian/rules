@@ -41,6 +41,19 @@ ifneq (,$(findstring libpam-modules, $(shell dh_listpackages)))
 	dh_install -plibpam-modules -Xpam_cracklib
 endif
 	dh_install -Nlibpam-modules
+	# Make sure the md5sums for the templates we ship are
+	# recognized by pam-auth-update.
+	for f in common-auth common-session common-session-noninteractive common-account common-password; do \
+	if grep -q $$(perl debian/template-md5sum debian/local/$$f ) debian/local/pam-auth-update; then \
+	    echo $$f okay; \
+	else \
+	    echo md5sum for $$f not registered in debian/local/pam-auth-update; \
+	    echo use debian/template-md5sum to compute; \
+	    exit 2; \
+	fi; \
+	done
+
+
 
 # again, excluding files by hand; also, build our local manpage for pam_getenv
 # from the XML
