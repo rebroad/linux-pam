@@ -1,3 +1,10 @@
+pam (1.4.0-10) UNRELEASED; urgency=medium
+
+  * Fix syntax error in libpam0g.postinst when a systemd unit fails,
+    Closes: #992538
+
+ -- Sam Hartman <hartmans@debian.org>  Thu, 26 Aug 2021 13:11:23 -0600
+
 pam (1.4.0-9) unstable; urgency=medium
 
   * Revert prefer the multiarch path from 1.4.0-8: It turns out that
