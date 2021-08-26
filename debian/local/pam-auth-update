@@ -88,6 +88,11 @@ while ($#ARGV >= 0) {
 		$force = 1;
 	} elsif ($opt eq '--package') {
 		$package = 1;
+        } elsif ($opt eq '--root') {
+                my $rootdir = shift @ARGV;
+                $savedir = "${rootdir}$savedir";
+                $confdir = "${rootdir}$confdir";
+               $inputdir = "${rootdir}$inputdir";
 	} elsif ($opt eq '--remove') {
 		while ($#ARGV >= 0) {
 			last if ($ARGV[0] =~ /^--/);
