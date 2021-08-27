@@ -1,4 +1,4 @@
-pam (1.4.0-10) UNRELEASED; urgency=medium
+pam (1.4.0-10) unstable; urgency=medium
 
   * Fix syntax error in libpam0g.postinst when a systemd unit fails,
     Closes: #992538
@@ -7,6 +7,7 @@ pam (1.4.0-10) UNRELEASED; urgency=medium
     #992848
   * Support DPKG_ROOT for pam-auth-update, thanks Johannes 'josch' Schauer
     Closes: #983427
+
 
  -- Sam Hartman <hartmans@debian.org>  Thu, 26 Aug 2021 13:43:23 -0600
 
