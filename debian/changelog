@@ -3,7 +3,7 @@ pam (1.4.0-2) unstable; urgency=medium
   * Restart services on upgrade to 1.4.0.  Closes: #978555.
 
  -- Steve Langasek <steve.langasek@ubuntu.com>  Mon, 28 Dec 2020 19:20:38 -0800
-
+    
 pam (1.4.0-1) unstable; urgency=medium
 
   * New upstream release.  Closes: #948188.
