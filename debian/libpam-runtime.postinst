@@ -20,9 +20,9 @@ then
 	for configfile in common-auth common-account common-session  \
 	    common-password
 	do
-		if [ -f /etc/pam.d/$configfile ] && \
+		if [ -f "$DPKG_ROOT/etc/pam.d/$configfile" ] && \
 		    ! fgrep -q $(calculate_md5sum $configfile) \
-		    /usr/share/pam/$configfile.md5sums 2>/dev/null
+		    "$DPKG_ROOT/usr/share/pam/$configfile.md5sums" 2>/dev/null
 		then
 			force=
 		fi
