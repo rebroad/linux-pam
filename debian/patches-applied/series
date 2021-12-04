@@ -26,3 +26,5 @@ pam_unix_initialize_daysleft
 pam_faillock_create_directory
 pam_mkhomedir_stat_before_opendir
 pam_unix_avoid_checksalt
+
+pam_env-allow-environment-files-without-EOL-at-EOF.patch
