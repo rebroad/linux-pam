@@ -1,10 +1,10 @@
-pam (1.4.0-13) UNRELEASED; urgency=medium
+pam (1.4.0-13) unstable; urgency=medium
 
   * Don't build with NIS support.  This is only used for password changes on
     NIS systems, and is pulling a large dependency chain into the Essential
     package set which is not justifiable.
 
- -- Steve Langasek <vorlon@debian.org>  Mon, 25 Apr 2022 16:09:47 -0700
+ -- Steve Langasek <vorlon@debian.org>  Mon, 25 Apr 2022 16:12:04 -0700
 
 pam (1.4.0-11) unstable; urgency=medium
 
