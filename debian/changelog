@@ -2,6 +2,13 @@ pam (1.5.2-1) UNRELEASED; urgency=medium
 
   * New upstream release.
     - fixes compatibility with libpam-systemd.  Closes: #1017467.
+  * Refresh patches.
+  * Drop patches included or obsoleted upstream:
+    - debian/patches-applied/pam_unix_fix_sgid_shadow_auth.patch
+    - debian/patches-applied/pam_unix_initialize_daysleft
+    - debian/patches-applied/pam_faillock_create_directory
+    - debian/patches-applied/pam_unix_avoid_checksalt
+    - debian/patches-applied/pam_env-allow-environment-files-without-EOL-at-EOF.patch
 
  -- Steve Langasek <vorlon@debian.org>  Wed, 17 Aug 2022 05:10:03 +0000
 
