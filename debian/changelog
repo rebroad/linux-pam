@@ -1,3 +1,10 @@
+pam (1.5.2-1) UNRELEASED; urgency=medium
+
+  * New upstream release.
+    - fixes compatibility with libpam-systemd.  Closes: #1017467.
+
+ -- Steve Langasek <vorlon@debian.org>  Wed, 17 Aug 2022 05:10:03 +0000
+
 pam (1.4.0-13) unstable; urgency=medium
 
   * Don't build with NIS support.  This is only used for password changes on
