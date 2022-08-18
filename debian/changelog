@@ -1,4 +1,4 @@
-pam (1.5.2-2) UNRELEASED; urgency=medium
+pam (1.5.2-2) unstable; urgency=medium
 
   * Pass --with-systemdunitdir=/usr/lib/systemd/system for consistent
     builds whether we are or aren't building in an environment with systemd
@@ -6,7 +6,7 @@ pam (1.5.2-2) UNRELEASED; urgency=medium
   * Install the pam_namespace.service unit in the libpam-modules-bin
     package.
 
- -- Steve Langasek <vorlon@debian.org>  Thu, 18 Aug 2022 16:19:52 +0000
+ -- Steve Langasek <vorlon@debian.org>  Thu, 18 Aug 2022 16:47:57 +0000
 
 pam (1.5.2-1) unstable; urgency=medium
 
