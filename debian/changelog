@@ -21,6 +21,7 @@ pam (1.5.2-1) UNRELEASED; urgency=medium
   * Adjust lintian overrides for latest lintian syntax.
   * Update Standards-Version.
   * Bump debhelper compat to 13.
+  * Override incorrect lintian warning about use of dpkg database.
 
  -- Steve Langasek <vorlon@debian.org>  Wed, 17 Aug 2022 05:10:03 +0000
 
