@@ -21,6 +21,7 @@ pam (1.5.2-1) UNRELEASED; urgency=medium
   * Adjust lintian overrides for latest lintian syntax.
   * Update Standards-Version.
   * Bump debhelper compat to 13.
+  * debian/not-installed: document upstream files that aren't used.
   * Override incorrect lintian warning about use of dpkg database.
   * Override lintian warning for PAM module manpages being in section 8
   * Override lintian warning for unused debconf templates
