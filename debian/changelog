@@ -5,6 +5,8 @@ pam (1.5.2-3) UNRELEASED; urgency=medium
   * Drop obsolete upgrade code from maintainer scripts which is no longer
     used
   * Drop manual multiarch file handling in favor of dh-exec.
+  * No special-case needed for pam_modutil_sanitize_helper_fds in symbols
+    file, it's covered by the existing globs.
 
  -- Steve Langasek <vorlon@debian.org>  Thu, 18 Aug 2022 18:26:29 +0000
 
