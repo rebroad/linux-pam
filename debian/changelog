@@ -2,6 +2,7 @@ pam (1.5.2-1) UNRELEASED; urgency=medium
 
   * New upstream release.
     - fixes compatibility with libpam-systemd.  Closes: #1017467.
+    - fixes bashisms in configure.ac.  Closes: #998361.
   * Refresh patches.
   * Drop patches included or obsoleted upstream:
     - debian/patches-applied/pam_unix_fix_sgid_shadow_auth.patch
