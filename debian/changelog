@@ -25,6 +25,8 @@ pam (1.5.2-1) UNRELEASED; urgency=medium
   * Override incorrect lintian warning about use of dpkg database.
   * Override lintian warning for PAM module manpages being in section 8
   * Override lintian warning for unused debconf templates
+  * Install additional upstream manpages: faillock(8), environment(5),
+    pwhistory_helper(8)
 
  -- Steve Langasek <vorlon@debian.org>  Wed, 17 Aug 2022 05:10:03 +0000
 
