@@ -15,6 +15,8 @@ pam (1.5.2-1) UNRELEASED; urgency=medium
   * Update .symbols file.
   * Updated Romanian debconf translation, thanks Andrei Popescu, Closes:
     #986416
+  * Drop versioning of quilt build-dependency to quiet lintian, since the
+    version is satisfied by oldoldoldstable.
 
  -- Steve Langasek <vorlon@debian.org>  Wed, 17 Aug 2022 05:10:03 +0000
 
