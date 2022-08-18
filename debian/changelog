@@ -19,6 +19,7 @@ pam (1.5.2-1) UNRELEASED; urgency=medium
     version is satisfied by oldoldoldstable.
   * Drop unused build-build-dependency on bzip2.
   * Adjust lintian overrides for latest lintian syntax.
+  * Update Standards-Version.
 
  -- Steve Langasek <vorlon@debian.org>  Wed, 17 Aug 2022 05:10:03 +0000
 
