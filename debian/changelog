@@ -9,6 +9,7 @@ pam (1.5.2-1) UNRELEASED; urgency=medium
     - debian/patches-applied/pam_faillock_create_directory
     - debian/patches-applied/pam_unix_avoid_checksalt
     - debian/patches-applied/pam_env-allow-environment-files-without-EOL-at-EOF.patch
+  * Drop libpam-cracklib which has been obsoleted upstream.
 
  -- Steve Langasek <vorlon@debian.org>  Wed, 17 Aug 2022 05:10:03 +0000
 
