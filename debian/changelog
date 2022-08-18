@@ -4,6 +4,7 @@ pam (1.5.2-3) UNRELEASED; urgency=medium
     installed by the upstream rules
   * Drop obsolete upgrade code from maintainer scripts which is no longer
     used
+  * Drop manual multiarch file handling in favor of dh-exec.
 
  -- Steve Langasek <vorlon@debian.org>  Thu, 18 Aug 2022 18:26:29 +0000
 
