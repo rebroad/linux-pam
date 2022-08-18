@@ -13,6 +13,8 @@ pam (1.5.2-1) UNRELEASED; urgency=medium
   * Drop libpam-cracklib which has been obsoleted upstream.
   * Add pkgconfig .pc files to libpam0g-dev.  Closes: #1012688.
   * Update .symbols file.
+  * Updated Romanian debconf translation, thanks Andrei Popescu, Closes:
+    #986416
 
  -- Steve Langasek <vorlon@debian.org>  Wed, 17 Aug 2022 05:10:03 +0000
 
