@@ -2,6 +2,8 @@ pam (1.5.2-3) UNRELEASED; urgency=medium
 
   * Add missing manpages for pam_namespace which for some reason don't get
     installed by the upstream rules
+  * Drop obsolete upgrade code from maintainer scripts which is no longer
+    used
 
  -- Steve Langasek <vorlon@debian.org>  Thu, 18 Aug 2022 18:26:29 +0000
 
