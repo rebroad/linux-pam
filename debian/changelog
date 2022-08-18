@@ -18,6 +18,7 @@ pam (1.5.2-1) UNRELEASED; urgency=medium
   * Drop versioning of quilt build-dependency to quiet lintian, since the
     version is satisfied by oldoldoldstable.
   * Drop unused build-build-dependency on bzip2.
+  * Adjust lintian overrides for latest lintian syntax.
 
  -- Steve Langasek <vorlon@debian.org>  Wed, 17 Aug 2022 05:10:03 +0000
 
