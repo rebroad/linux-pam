@@ -22,6 +22,7 @@ pam (1.5.2-1) UNRELEASED; urgency=medium
   * Update Standards-Version.
   * Bump debhelper compat to 13.
   * Override incorrect lintian warning about use of dpkg database.
+  * Override lintian warning for PAM module manpages being in section 8
 
  -- Steve Langasek <vorlon@debian.org>  Wed, 17 Aug 2022 05:10:03 +0000
 
