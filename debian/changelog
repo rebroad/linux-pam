@@ -9,6 +9,8 @@ pam (1.5.2-3) UNRELEASED; urgency=medium
     file, it's covered by the existing globs.
   * debian/local/Debian-PAM-MiniPolicy: drop references to ancient
     package versions.  Thanks, Marc Haber.
+  * Support DPKG_ROOT in the postinst scripts.  Closes: #993161.
+    Thanks, Johannes Schauer Marin Rodrigues.
 
  -- Steve Langasek <vorlon@debian.org>  Thu, 18 Aug 2022 18:26:29 +0000
 
