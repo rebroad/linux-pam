@@ -1,3 +1,12 @@
+pam (1.5.2-5) UNRELEASED; urgency=medium
+
+  * pam_namespace_helper manpage *wasn't* missing, it was just being
+    wrongly shipped in libpam-modules instead - so complete the moving
+    of the manpage to the libpam-modules-bin where it belongs with the
+    binary.  Really Closes: #1021336.
+
+ -- Steve Langasek <vorlon@debian.org>  Thu, 06 Oct 2022 18:50:38 +0000
+
 pam (1.5.2-4) unstable; urgency=medium
 
   * pam_namespace_helper manpage was missing, but namespace.conf.5 was
