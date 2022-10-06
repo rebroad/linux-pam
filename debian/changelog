@@ -11,6 +11,7 @@ pam (1.5.2-3) UNRELEASED; urgency=medium
     package versions.  Thanks, Marc Haber.
   * Support DPKG_ROOT in the postinst scripts.  Closes: #993161.
     Thanks, Johannes Schauer Marin Rodrigues.
+  * Further proof libpam-runtime postinst for DPKG_ROOT just in case.
 
  -- Steve Langasek <vorlon@debian.org>  Thu, 18 Aug 2022 18:26:29 +0000
 
