@@ -1,4 +1,4 @@
-pam (1.5.2-3) UNRELEASED; urgency=medium
+pam (1.5.2-3) unstable; urgency=medium
 
   * Add missing manpages for pam_namespace which for some reason don't get
     installed by the upstream rules
@@ -13,7 +13,7 @@ pam (1.5.2-3) UNRELEASED; urgency=medium
     Thanks, Johannes Schauer Marin Rodrigues.
   * Further proof libpam-runtime postinst for DPKG_ROOT just in case.
 
- -- Steve Langasek <vorlon@debian.org>  Thu, 18 Aug 2022 18:26:29 +0000
+ -- Steve Langasek <vorlon@debian.org>  Thu, 06 Oct 2022 04:05:02 +0000
 
 pam (1.5.2-2) unstable; urgency=medium
 
