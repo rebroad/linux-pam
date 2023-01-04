@@ -1,11 +1,13 @@
-pam (1.5.2-6) UNRELEASED; urgency=medium
+pam (1.5.2-6) unstable; urgency=medium
 
   * Update debian/copyright, Thanks Bastian Germann, Closes: #460232
   * When pam-auth-update is called with --root,  use
     /usr/share/pam-configs from the root not from the host system, Thanks
     Johannes Schauer Marin Rodrigues, Closes: #1022952
   * Build-depend on libcrypt-dev, Closes: #1024645
-  
+  *  Add pam-auth-udpate --disable, Closes: #1004000
+  * Add autopkgtests
+
  -- Sam Hartman <hartmans@debian.org>  Tue, 03 Jan 2023 13:15:23 -0700
 
 pam (1.5.2-5) unstable; urgency=medium
