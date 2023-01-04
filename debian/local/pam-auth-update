@@ -39,7 +39,7 @@ my $blanktemplate = 'libpam-runtime/no_profiles_chosen';
 my $titletemplate = 'libpam-runtime/title';
 my $confdir = '/etc/pam.d';
 my $savedir = '/var/lib/pam';
-my (%profiles, @sorted, @enabled, @conflicts, @new, %removals, %to_enable);
+my (%profiles, @sorted, @enabled, @conflicts, @new, %removals, %to_disable, %to_enable);
 my $force = 0;
 my $package = 0;
 my $priority = 'high';
@@ -90,6 +90,13 @@ while ($#ARGV >= 0) {
 		}
 		# --remove implies --package
 		$package = 1 if (keys(%removals));
+	} elsif ($opt eq '--disable') {
+		while ($#ARGV >= 0) {
+			last if ($ARGV[0] =~ /^--/);
+			$to_disable{shift @ARGV} = 1;
+		}
+		# --disable implies --package
+		$package = 1 if (keys(%to_disable));
 	} elsif ($opt eq '--enable') {
 		while ($#ARGV >= 0) {
 			last if ($ARGV[0] =~ /^--/);
@@ -148,15 +155,21 @@ if (-e $savedir . '/seen') {
 # filter out any options that are no longer available for any reason
 @enabled = grep { $profiles{$_} } @enabled;
 
+# add configs to enable
+push(@enabled,
+     grep { $to_enable{$_} } @sorted);
+
+# Disable anything explicitly disabled
+@enabled = grep {!$to_disable{$_} } @enabled;
+# And we've seen anything we disable
+delete @seen{ keys %to_disable};
+
 # an empty module set is an error, so in that case grab all the defaults
 if (!@enabled) {
 	%seen = ();
 	$priority = 'high' unless ($force);
 }
 
-# add configs to enable
-push(@enabled,
-     grep { $to_enable{$_} } @sorted);
 
 # add any previously-unseen configs
 push(@enabled,
