@@ -28,7 +28,11 @@ grep -i rounds /etc/pam.d/common-password &&fail rounds parameter already specif
 sed -i -e 's/obscure yescrypt/obscure yescrypt rounds=3/' /etc/pam.d/common-password
 grep rounds /etc/pam.d/common-password ||fail sed did not update common password
 
+( echo get libpam-runtime/profiles |debconf-communicate  |grep mkhomedir) || fail mkhomedir not in enabled profiles
+
 # Confirm removing mkhomedir preserves  rounds parameter
 pam-auth-update --disable mkhomedir ||fail pam-auth-update disable failed
+( echo get libpam-runtime/profiles |debconf-communicate |grep mkhomedir) && fail mkhomedir still in profiles
+grep mkhomedir /var/lib/pam/seen || fail mkhomedir removed from seen after disable
 grep  mkhomedir /etc/pam.d/common-session &&fail pam_mkhomedir not removed
 grep rounds  /etc/pam.d/common-password || fail rounds parameter not preserved

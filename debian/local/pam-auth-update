@@ -162,7 +162,9 @@ push(@enabled,
 # Disable anything explicitly disabled
 @enabled = grep {!$to_disable{$_} } @enabled;
 # And we've seen anything we disable
-delete @seen{ keys %to_disable};
+foreach my $i (keys %to_disable) {
+        $seen{$i} = 1;
+}
 
 # an empty module set is an error, so in that case grab all the defaults
 if (!@enabled) {
