@@ -69,3 +69,6 @@ ifneq (,$(findstring libpam-modules, $(shell dh_listpackages)))
 	chgrp shadow $(d)/libpam-modules-bin/sbin/unix_chkpwd
 	chmod 02755 $(d)/libpam-modules-bin/sbin/unix_chkpwd
 endif
+
+override_dh_installchangelogs:
+	dh_installchangelogs NEWS
