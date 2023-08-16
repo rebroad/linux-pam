@@ -1,9 +1,18 @@
-pam (1.5.2-7) UNRELEASED; urgency=medium
+pam (1.5.2-7) unstable; urgency=medium
 
+  [ Steve Langasek ]
   * Drop reference to stale package version in libpam-modules.postinst;
     thanks, Gioele Barabucci <gioele@svario.it>.
 
- -- Steve Langasek <vorlon@debian.org>  Sun, 30 Jul 2023 14:04:48 -0700
+  [ Sam Hartman ]
+  * Fix pam-auth-update --disable logic error, Closes: #1039873
+  * Set myself as maintainer; thanks Steve for past and future work.
+  * Fix watch file, thanks Daniel Lewart, Closes: #1040310
+  * Install upstream NEWS file as main upstream changelog; detailed
+    CHANGELOG only  in libpam-doc, Closes: #1040315
+  * Updated Turkish Debconf translations, Thanks Atila KOÇ, Closes: #1029002
+
+ -- Sam Hartman <hartmans@debian.org>  Wed, 16 Aug 2023 17:22:53 -0600
 
 pam (1.5.2-6) unstable; urgency=medium
 
