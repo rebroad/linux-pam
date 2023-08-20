@@ -85,6 +85,7 @@ Provides: pam-doc
 Section: doc
 Architecture: all
 Depends: ${misc:Depends}
+Multi-Arch: foreign
 Description: Documentation of PAM
  Contains documentation (in HTML, ASCII, and PostScript format) for libpam,
  the Pluggable Authentication Modules library, a library that enables the
