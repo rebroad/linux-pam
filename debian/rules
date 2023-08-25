@@ -24,7 +24,7 @@ dl = $(d)/local
 # avoid libaudit-dev when bootstrapping
 ifneq (,$(filter stage1,$(DEB_BUILD_PROFILES)))
   CONFIGURE_OPTS += --disable-audit
-endif  
+endif
 
 override_dh_auto_configure:
 	dh_auto_configure -- --enable-static --enable-shared \
