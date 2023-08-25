@@ -4,6 +4,7 @@ pam (1.5.2-8) UNRELEASED; urgency=medium
     + debian/libpam-runtime.lintian-overrides: line 5, 7, 9-13
     + debian/libpam-modules.lintian-overrides: line 5-10, 14
   * Trim trailing whitespace.
+  * Move source package lintian overrides to debian/source.
 
  -- Debian Janitor <janitor@jelmer.uk>  Fri, 25 Aug 2023 03:37:56 -0000
 
