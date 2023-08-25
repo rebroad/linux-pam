@@ -19,7 +19,7 @@ d = $(CURDIR)/debian
 dl = $(d)/local
 
 %:
-	dh $@ --with quilt,autoreconf
+	dh $@ --with quilt
 
 # avoid libaudit-dev when bootstrapping
 ifneq (,$(filter stage1,$(DEB_BUILD_PROFILES)))

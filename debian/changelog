@@ -7,6 +7,7 @@ pam (1.5.2-8) UNRELEASED; urgency=medium
   * Move source package lintian overrides to debian/source.
   * Update renamed lintian tag names in lintian overrides.
   * Set upstream metadata fields: Bug-Database, Bug-Submit, Repository-Browse.
+  * Drop unnecessary dependency on dh-autoreconf.
 
  -- Debian Janitor <janitor@jelmer.uk>  Fri, 25 Aug 2023 03:37:56 -0000
 
