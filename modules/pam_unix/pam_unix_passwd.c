@@ -86,6 +86,9 @@ extern int getrpcport(const char *host, unsigned long prognum,
 # endif				/* GNU libc 2.1 */
 #endif
 
+extern const char *obscure_msg(const char *, const char *, const struct passwd *,
+			       unsigned int);
+
 /*
    How it works:
    Gets in username (has to be done) from the calling program
@@ -584,6 +587,11 @@ static int _pam_unix_approve_pass(pam_handle_t * pamh
 				return retval;
 			}
 		}
+		if (!remark && pass_old != NULL) { /* only check if we don't already have a failure */
+			struct passwd *pwd;
+			pwd = pam_modutil_getpwnam(pamh, user);
+			remark = (char *)obscure_msg(pass_old,pass_new,pwd,ctrl); /* do obscure checks */
+		}
 	}
 	if (remark) {
 		_make_remark(pamh, ctrl, PAM_ERROR_MSG, remark);
@@ -599,7 +607,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 	int retval;
 	int remember = -1;
 	int rounds = 0;
-	int pass_min_len = 0;
+	int pass_min_len = 6;
 
 	/* <DO NOT free() THESE> */
 	const char *user;

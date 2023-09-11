@@ -216,7 +216,38 @@ minlen=n
 .RS 4
 Set a minimum password length of
 \fIn\fR
-characters\&. The max\&. for DES crypt based passwords are 8 characters\&.
+characters\&. The default value is 6\&. The maximum for DES crypt\-based passwords is 8 characters\&.
+.RE
+.PP
+\fBobscure\fR
+.RS 4
+Enable some extra checks on password strength\&. These checks are based on the "obscure" checks in the original shadow package\&. The behavior is similar to the pam_cracklib module, but for non\-dictionary\-based checks\&. The following checks are implemented:
+.PP
+\fBPalindrome\fR
+.RS 4
+Verifies that the new password is not a palindrome of (i\&.e\&., the reverse of) the previous one\&.
+.RE
+.PP
+\fBCase Change Only\fR
+.RS 4
+Verifies that the new password isn\*(Aqt the same as the old one with a change of case\&.
+.RE
+.PP
+\fBSimilar\fR
+.RS 4
+Verifies that the new password isn\*(Aqt too much like the previous one\&.
+.RE
+.PP
+\fBSimple\fR
+.RS 4
+Is the new password too simple? This is based on the length of the password and the number of different types of characters (alpha, numeric, etc\&.) used\&.
+.RE
+.PP
+\fBRotated\fR
+.RS 4
+Is the new password a rotated version of the old password? (E\&.g\&., "billy" and "illyb")
+.RE
+.sp
 .RE
 .PP
 no_pass_expiry
