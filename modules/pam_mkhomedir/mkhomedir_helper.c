@@ -271,6 +271,7 @@ create_homedir(struct dir_spec *parent, const struct passwd *pwd,
    struct dirent *dent;
    struct dir_spec base;
    int retval = PAM_SESSION_ERR;
+   struct stat stat_buf;
 
    /* Create the new directory */
    if (mkdirat(parent->fd, dest, 0700))
@@ -295,6 +296,12 @@ create_homedir(struct dir_spec *parent, const struct passwd *pwd,
       goto go_out;
    }
 
+   /* Various things such as an autofs mount with browsing disabled
+    * can cause the directory to appear only on stat.  The intent is
+    * to minimize network traversal when a file explorer tries to
+    * traverse large chunks of a directory tree.  So stat first.*/
+   stat(source, &stat_buf);
+   
    /* Scan the directory */
    d = opendir(source);
    if (d == NULL)
