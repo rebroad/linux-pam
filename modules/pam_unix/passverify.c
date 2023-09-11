@@ -804,7 +804,7 @@ PAMH_ARG_DECL(int unix_update_passwd,
     struct passwd *tmpent = NULL;
     struct stat st;
     FILE *pwfile, *opwfile;
-    int err = 1;
+    int err = 1, found = 0;
     int oldmask;
 #ifdef WITH_SELINUX
     char *prev_context_raw = NULL;
@@ -875,6 +875,7 @@ PAMH_ARG_DECL(int unix_update_passwd,
 
 	    tmpent->pw_passwd = assigned_passwd.charp;
 	    err = 0;
+	    found = 1;
 	}
 	if (putpwent(tmpent, pwfile)) {
 	    D(("error writing entry to password file: %m"));
@@ -917,7 +918,7 @@ done:
 	return PAM_SUCCESS;
     } else {
 	unlink(PW_TMPFILE);
-	return PAM_AUTHTOK_ERR;
+	return found ? PAM_AUTHTOK_ERR : PAM_USER_UNKNOWN;
     }
 }
 
