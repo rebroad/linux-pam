@@ -647,7 +647,7 @@ JH_CHECK_XML_CATALOG([http://docbook.sourceforge.net/release/xsl-ns/current/manp
 
 AC_PATH_PROG([BROWSER], [w3m])
 if test -n "$BROWSER"; then
-     BROWSER="$BROWSER -T text/html -dump"
+     BROWSER="LC_ALL=C.UTF-8 $BROWSER -T text/html -dump"
 else
      AC_PATH_PROG([BROWSER], [elinks])
      if test -n "$BROWSER"; then
