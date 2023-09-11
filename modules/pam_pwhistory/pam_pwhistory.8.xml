@@ -282,7 +282,7 @@ password     required       pam_unix.so        use_authtok
 	<refentrytitle>pam.d</refentrytitle><manvolnum>5</manvolnum>
       </citerefentry>,
       <citerefentry>
-	<refentrytitle>pam</refentrytitle><manvolnum>8</manvolnum>
+	<refentrytitle>pam</refentrytitle><manvolnum>7</manvolnum>
       </citerefentry>
       <citerefentry>
 	<refentrytitle>pam_get_authtok</refentrytitle><manvolnum>3</manvolnum>

@@ -35,7 +35,7 @@ foreach man: [['misc_conv.3', []],
               ['pam_syslog.3', ['pam_vsyslog.3']],
               ['pam_xauth_data.3', []],
               ['pam.conf.5', ['pam.d.5']],
-              ['pam.8', ['PAM.8']],
+              ['pam.7', ['PAM.7']],
              ]
   xml = man[0] + '.xml'
 
