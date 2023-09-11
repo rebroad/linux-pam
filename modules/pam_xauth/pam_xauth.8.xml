@@ -273,7 +273,7 @@ session  optional  pam_xauth.so
 	<refentrytitle>pam.d</refentrytitle><manvolnum>5</manvolnum>
       </citerefentry>,
       <citerefentry>
-	<refentrytitle>pam</refentrytitle><manvolnum>8</manvolnum>
+	<refentrytitle>pam</refentrytitle><manvolnum>7</manvolnum>
       </citerefentry>
     </para>
   </refsect1>
