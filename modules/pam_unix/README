@@ -171,8 +171,40 @@ broken_shadow
 
 minlen=n
 
-    Set a minimum password length of n characters. The max. for DES crypt based
-    passwords are 8 characters.
+    Set a minimum password length of n characters. The default value is 6. The
+    maximum for DES crypt-based passwords is 8 characters.
+
+obscure
+
+    Enable some extra checks on password strength. These checks are based on
+    the "obscure" checks in the original shadow package. The behavior is
+    similar to the pam_cracklib module, but for non-dictionary-based checks.
+    The following checks are implemented:
+
+    Palindrome
+
+        Verifies that the new password is not a palindrome of (i.e., the
+        reverse of) the previous one.
+
+    Case Change Only
+
+        Verifies that the new password isn't the same as the old one with a
+        change of case.
+
+    Similar
+
+        Verifies that the new password isn't too much like the previous one.
+
+    Simple
+
+        Is the new password too simple? This is based on the length of the
+        password and the number of different types of characters (alpha,
+        numeric, etc.) used.
+
+    Rotated
+
+        Is the new password a rotated version of the old password? (E.g.,
+        "billy" and "illyb")
 
 no_pass_expiry
 
