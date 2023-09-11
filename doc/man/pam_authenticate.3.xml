@@ -160,7 +160,7 @@
         <refentrytitle>pam_strerror</refentrytitle><manvolnum>3</manvolnum>
       </citerefentry>,
       <citerefentry>
-        <refentrytitle>pam</refentrytitle><manvolnum>8</manvolnum>
+        <refentrytitle>pam</refentrytitle><manvolnum>7</manvolnum>
       </citerefentry>
     </para>
   </refsect1>
