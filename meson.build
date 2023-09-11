@@ -473,6 +473,8 @@ endif
 
 feature_docs = get_option('docs')
 enable_docs = not feature_docs.disabled()
+docs_env = environment()
+docs_env.set('LC_ALL', 'C.UTF-8')
 if enable_docs
   prog_xsltproc = find_program(
     'xsltproc',
@@ -489,7 +491,7 @@ if enable_docs
     required: false,
   )
   if prog_w3m.found()
-    browser = [prog_w3m, '-T', 'text/html', '-dump']
+    browser = [ prog_w3m, '-T', 'text/html', '-dump']
   else
     prog_elinks = find_program(
       'elinks',
