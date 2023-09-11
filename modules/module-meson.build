@@ -245,6 +245,7 @@ custom_target(
             '@INPUT@',
             '@OUTPUT@',
             browser],
+  env:docs_env,
   install: true,
   install_dir: docdir / 'modules',
   install_tag: 'doc',
