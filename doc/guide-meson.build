@@ -50,6 +50,7 @@ custom_target(
     '@OUTPUT@',
     browser,
   ],
+  env:docs_env, 
   install: true,
   install_dir: docdir,
   install_tag: 'doc',
