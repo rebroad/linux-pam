@@ -89,6 +89,11 @@
               </para>
             </listitem>
           </itemizedlist>
+	  <para>
+	    <emphasis remap='B'>NOTE:</emphasis> group and wildcard limits are not
+	    applied to the root user.  To set a limit for the root user, this field
+	    must contain the literal username <emphasis remap='B'>root</emphasis>.
+	  </para>
         </listitem>
       </varlistentry>
 
@@ -320,6 +325,7 @@
     </para>
     <programlisting>
 *               soft    core            0
+root            hard    core            100000
 *               hard    nofile          512
 @student        hard    nproc           20
 @faculty        soft    nproc           20

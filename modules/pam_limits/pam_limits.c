@@ -47,8 +47,17 @@
 #include <libaudit.h>
 #endif
 
+
 #ifndef PR_SET_NO_NEW_PRIVS
 # define PR_SET_NO_NEW_PRIVS 38 /* from <linux/prctl.h> */
+#endif
+
+#ifndef MLOCK_LIMIT
+#ifdef __FreeBSD_kernel__
+#define MLOCK_LIMIT RLIM_INFINITY
+#else
+#define MLOCK_LIMIT (64*1024)
+#endif
 #endif
 
 /* Module defines */
@@ -88,6 +97,7 @@ struct user_limits_struct {
 
 /* internal data */
 struct pam_limit_s {
+    int root;            /* running as root? */
     int login_limit;     /* the max logins limit */
     int login_limit_def; /* which entry set the login limit */
     int flag_numsyslogins; /* whether to limit logins only for a
@@ -455,8 +465,17 @@ static int init_limits(pam_handle_t *pamh, struct pam_limit_s *pl, int ctrl)
 {
     int i;
     int retval = PAM_SUCCESS;
+    static int mlock_limit = 0;
 
     D(("called."));
+
+    pl->root = 0;
+
+    if (mlock_limit == 0) {
+	mlock_limit = sysconf(_SC_PAGESIZE);
+	if (mlock_limit < MLOCK_LIMIT)
+		mlock_limit = MLOCK_LIMIT;
+    }
 
     for(i = 0; i < RLIM_NLIMITS; i++) {
 	int r = getrlimit(i, &pl->limits[i].limit);
@@ -473,18 +492,68 @@ static int init_limits(pam_handle_t *pamh, struct pam_limit_s *pl, int ctrl)
     }
 
 #ifdef __linux__
-    if (ctrl & PAM_SET_ALL) {
-      parse_kernel_limits(pamh, pl, ctrl);
+    parse_kernel_limits(pamh, pl, ctrl);
+#endif
 
-      for(i = 0; i < RLIM_NLIMITS; i++) {
+    for(i = 0; i < RLIM_NLIMITS; i++) {
 	if (pl->limits[i].supported &&
 	    (pl->limits[i].src_soft == LIMITS_DEF_NONE ||
 	     pl->limits[i].src_hard == LIMITS_DEF_NONE)) {
-	  pam_syslog(pamh, LOG_WARNING, "Did not find kernel RLIMIT for %s, using PAM default", rlimit2str(i));
-	}
-      }
-    }
+#ifdef __linux__
+	    pam_syslog(pamh, LOG_WARNING, "Did not find kernel RLIMIT for %s, using PAM default", rlimit2str(i));
 #endif
+	    pl->limits[i].src_soft = LIMITS_DEF_DEFAULT;
+	    pl->limits[i].src_hard = LIMITS_DEF_DEFAULT;
+	    switch(i) {
+		case RLIMIT_CPU:
+		case RLIMIT_FSIZE:
+		case RLIMIT_DATA:
+		case RLIMIT_RSS:
+		case RLIMIT_NPROC:
+#ifdef RLIMIT_AS
+		case RLIMIT_AS:
+#endif
+#ifdef RLIMIT_LOCKS
+		case RLIMIT_LOCKS:
+#endif
+		    pl->limits[i].limit.rlim_cur = RLIM_INFINITY;
+		    pl->limits[i].limit.rlim_max = RLIM_INFINITY;
+		    break;
+		case RLIMIT_MEMLOCK:
+		    pl->limits[i].limit.rlim_cur = mlock_limit;
+		    pl->limits[i].limit.rlim_max = mlock_limit;
+		    break;
+#ifdef RLIMIT_SIGPENDING
+		case RLIMIT_SIGPENDING:
+		    pl->limits[i].limit.rlim_cur = 16382;
+		    pl->limits[i].limit.rlim_max = 16382;
+		    break;
+#endif
+#ifdef RLIMIT_MSGQUEUE
+		case RLIMIT_MSGQUEUE:
+		    pl->limits[i].limit.rlim_cur = 819200;
+		    pl->limits[i].limit.rlim_max = 819200;
+		    break;
+#endif
+		case RLIMIT_CORE:
+		    pl->limits[i].limit.rlim_cur = 0;
+		    pl->limits[i].limit.rlim_max = RLIM_INFINITY;
+		    break;
+		case RLIMIT_STACK:
+		    pl->limits[i].limit.rlim_cur = 8192*1024;
+		    pl->limits[i].limit.rlim_max = RLIM_INFINITY;
+		    break;
+		case RLIMIT_NOFILE:
+		    pl->limits[i].limit.rlim_cur = 1024;
+		    pl->limits[i].limit.rlim_max = 1024;
+		    break;
+		default:
+		    pl->limits[i].src_soft = LIMITS_DEF_NONE;
+		    pl->limits[i].src_hard = LIMITS_DEF_NONE;
+		    break;
+	    }
+	}
+    }
 
     errno = 0;
     pl->priority = getpriority (PRIO_PROCESS, 0);
@@ -885,7 +954,7 @@ parse_config_file(pam_handle_t *pamh, const char *uname, uid_t uid, gid_t gid,
 
             if (strcmp(uname, domain) == 0) /* this user have a limit */
                 process_limit(pamh, LIMITS_DEF_USER, ltype, item, value, ctrl, pl);
-            else if (domain[0]=='@') {
+            else if (domain[0]=='@' && !pl->root) {
 		if (ctrl & PAM_DEBUG_ARG) {
 			pam_syslog(pamh, LOG_DEBUG,
 				   "checking if %s is in group %s",
@@ -911,7 +980,7 @@ parse_config_file(pam_handle_t *pamh, const char *uname, uid_t uid, gid_t gid,
 			    process_limit(pamh, LIMITS_DEF_GROUP, ltype, item, value, ctrl,
 					  pl);
 		}
-            } else if (domain[0]=='%') {
+            } else if (domain[0]=='%' && !pl->root) {
 		if (ctrl & PAM_DEBUG_ARG) {
 			pam_syslog(pamh, LOG_DEBUG,
 				   "checking if %s is in group %s",
@@ -945,7 +1014,7 @@ parse_config_file(pam_handle_t *pamh, const char *uname, uid_t uid, gid_t gid,
             } else {
 		switch(rngtype) {
 		    case LIMIT_RANGE_NONE:
-			if (strcmp(domain, "*") == 0)
+			if (strcmp(domain, "*") == 0 && !pl->root)
 			    process_limit(pamh, LIMITS_DEF_DEFAULT, ltype, item, value, ctrl,
 					  pl);
 			break;
@@ -1228,6 +1297,8 @@ pam_sm_open_session (pam_handle_t *pamh, int flags UNUSED,
         return PAM_ABORT;
     }
 
+    if (pwd->pw_uid == 0)
+        pl->root = 1;
     retval = parse_config_file(pamh, pwd->pw_name, pwd->pw_uid, pwd->pw_gid,
 			       ctrl, pl, conf_file_set_by_user);
     if (retval == PAM_IGNORE) {

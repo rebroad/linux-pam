@@ -68,6 +68,7 @@ These are some example lines which might be specified in /etc/security/
 limits.conf.
 
 *               soft    core            0
+root            hard    core            100000
 *               hard    nofile          512
 @student        hard    nproc           20
 @faculty        soft    nproc           20

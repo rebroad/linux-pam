@@ -145,6 +145,10 @@ a gid specified as
 \fB%:\fR\fI<gid>\fR
 applicable to maxlogins limit only\&. It limits the total number of logins of all users that are member of the group with the specified gid\&.
 .RE
+.sp
+\fBNOTE:\fR
+group and wildcard limits are not applied to the root user\&. To set a limit for the root user, this field must contain the literal username
+\fBroot\fR\&.
 .RE
 .PP
 <type>
@@ -322,6 +326,7 @@ These are some example lines which might be specified in
 .\}
 .nf
 *               soft    core            0
+root            hard    core            100000
 *               hard    nofile          512
 @student        hard    nproc           20
 @faculty        soft    nproc           20
