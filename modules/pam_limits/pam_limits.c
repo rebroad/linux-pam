@@ -93,6 +93,7 @@ struct user_limits_struct {
 
 /* internal data */
 struct pam_limit_s {
+    int root;            /* running as root? */
     int login_limit;     /* the max logins limit */
     int login_limit_def; /* which entry set the login limit */
     int flag_numsyslogins; /* whether to limit logins only for a
@@ -538,6 +539,8 @@ static int init_limits(pam_handle_t *pamh, struct pam_limit_s *pl, int ctrl)
     int retval = PAM_SUCCESS;
 
     D(("called."));
+
+    pl->root = 0;
 
     for(i = 0; i < RLIM_NLIMITS; i++) {
 	int r = getrlimit(i, &pl->limits[i].limit);
@@ -1020,7 +1023,7 @@ parse_config_file(pam_handle_t *pamh, const char *uname, uid_t uid, gid_t gid,
 
             if (strcmp(uname, domain) == 0) /* this user has a limit */
                 process_limit(pamh, LIMITS_DEF_USER, ltype, item, value, ctrl, pl);
-            else if (domain[0]=='@') {
+            else if (domain[0]=='@' && !pl->root) {
 		if (ctrl & PAM_DEBUG_ARG) {
 			pam_syslog(pamh, LOG_DEBUG,
 				   "checking if %s is in group %s",
@@ -1046,7 +1049,7 @@ parse_config_file(pam_handle_t *pamh, const char *uname, uid_t uid, gid_t gid,
 			    process_limit(pamh, LIMITS_DEF_GROUP, ltype, item, value, ctrl,
 					  pl);
 		}
-            } else if (domain[0]=='%') {
+            } else if (domain[0]=='%' && !pl->root) {
 		if (ctrl & PAM_DEBUG_ARG) {
 			pam_syslog(pamh, LOG_DEBUG,
 				   "checking if %s is in group %s",
@@ -1081,7 +1084,7 @@ parse_config_file(pam_handle_t *pamh, const char *uname, uid_t uid, gid_t gid,
             } else {
 		switch(rngtype) {
 		    case LIMIT_RANGE_NONE:
-			if (strcmp(domain, "*") == 0)
+			if (strcmp(domain, "*") == 0 && !pl->root)
 			    process_limit(pamh, LIMITS_DEF_DEFAULT, ltype, item, value, ctrl,
 					  pl);
 			break;
@@ -1372,6 +1375,8 @@ pam_sm_open_session (pam_handle_t *pamh, int flags UNUSED,
         return PAM_ABORT;
     }
 
+    if (pwd->pw_uid == 0)
+        pl->root = 1;
     retval = parse_config_file(pamh, pwd->pw_name, pwd->pw_uid, pwd->pw_gid,
 			       ctrl, pl, conf_file_set_by_user);
     if (retval == PAM_IGNORE) {
