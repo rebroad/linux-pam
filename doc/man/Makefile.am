@@ -7,7 +7,7 @@ MAINTAINERCLEANFILES = $(MANS)
 
 EXTRA_DIST = $(MANS) $(XMLS)
 
-man_MANS = pam.3 PAM.8 pam.8 pam.conf.5 pam.d.5 \
+man_MANS = pam.3 PAM.7 pam.7 pam.conf.5 pam.d.5 \
 	pam_acct_mgmt.3 pam_authenticate.3 \
 	pam_chauthtok.3 pam_close_session.3 pam_conv.3 \
 	pam_end.3 pam_error.3 \
@@ -46,7 +46,8 @@ XMLS = pam.3.xml pam.8.xml pam.conf.5.xml \
 
 
 if ENABLE_REGENERATE_MAN
-PAM.8: pam.8
+pam.8: pam.8.xml
+PAM.7 pam.7: pam.8
 pam_get_authtok_noverify.3: pam_get_authtok.3
 pam_get_authtok_verify.3: pam_get_authtok.3
 pam_verror.3: pam_error.3
