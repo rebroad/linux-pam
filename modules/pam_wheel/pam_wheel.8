@@ -2,12 +2,12 @@
 .\"     Title: pam_wheel
 .\"    Author: [see the "AUTHOR" section]
 .\" Generator: DocBook XSL Stylesheets v1.79.2 <http://docbook.sf.net/>
-.\"      Date: 05/07/2023
+.\"      Date: 09/13/2023
 .\"    Manual: Linux-PAM Manual
 .\"    Source: Linux-PAM
 .\"  Language: English
 .\"
-.TH "PAM_WHEEL" "8" "05/07/2023" "Linux\-PAM" "Linux\-PAM Manual"
+.TH "PAM_WHEEL" "8" "09/13/2023" "Linux\-PAM" "Linux\-PAM Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -31,7 +31,7 @@
 pam_wheel \- Only permit root access to members of group wheel
 .SH "SYNOPSIS"
 .HP \w'\fBpam_wheel\&.so\fR\ 'u
-\fBpam_wheel\&.so\fR [debug] [deny] [group=\fIname\fR] [root_only] [trust] [use_uid]
+\fBpam_wheel\&.so\fR [debug] [deny] [group=\fIname\fR] [root_only] [trust]
 .SH "DESCRIPTION"
 .PP
 The pam_wheel PAM module is used to enforce the so\-called
@@ -71,11 +71,6 @@ The check for wheel membership is done only when the target user UID is 0\&.
 trust
 .RS 4
 The pam_wheel module will return PAM_SUCCESS instead of PAM_IGNORE if the user is a member of the wheel group (thus with a little play stacking the modules the wheel members may be able to su to root without being prompted for a passwd)\&.
-.RE
-.PP
-use_uid
-.RS 4
-The check will be done against the real uid of the calling process, instead of trying to obtain the user from the login session associated with the terminal in use\&.
 .RE
 .SH "MODULE TYPES PROVIDED"
 .PP
@@ -141,7 +136,7 @@ su      auth     required       pam_unix\&.so
 .PP
 \fBpam.conf\fR(5),
 \fBpam.d\fR(5),
-\fBpam\fR(8)
+\fBpam\fR(7)
 .SH "AUTHOR"
 .PP
 pam_wheel was written by Cristian Gafton <gafton@redhat\&.com>\&.
