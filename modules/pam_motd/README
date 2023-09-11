@@ -52,6 +52,10 @@ motd_dir=/path/dirname.d
     colon-separated list. By default this option is set to /etc/motd.d:/run/
     motd.d:/usr/lib/motd.d.
 
+noupdate
+
+    Don't run the scripts in /etc/update-motd.d to refresh the motd file.
+
 When no options are given, the default behavior applies for both options.
 Specifying either option (or both) will disable the default behavior for both
 options.
