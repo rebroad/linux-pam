@@ -1,14 +1,21 @@
+From: Sam Hartman <hartmans@debian.org>
+Date: Mon, 11 Sep 2023 14:00:42 -0600
+Subject: _pam_include
+
 Patch to implement an @include directive for use in pam.d config files.
 
 Authors: Jan Christoph Nordholz <hesso@pool.math.tu-berlin.de>
 
 Upstream status: not yet submitted
+---
+ libpam/pam_handlers.c | 36 ++++++++++++++++++++++++++++++++----
+ 1 file changed, 32 insertions(+), 4 deletions(-)
 
-Index: pam/libpam/pam_handlers.c
-===================================================================
---- pam.orig/libpam/pam_handlers.c
-+++ pam/libpam/pam_handlers.c
-@@ -123,6 +123,10 @@
+diff --git a/libpam/pam_handlers.c b/libpam/pam_handlers.c
+index 1f1917b..c7045d2 100644
+--- a/libpam/pam_handlers.c
++++ b/libpam/pam_handlers.c
+@@ -123,6 +123,10 @@ static int _pam_parse_conf_file(pam_handle_t *pamh, FILE *f
  		    module_type = PAM_T_ACCT;
  		} else if (!strcasecmp("password", tok)) {
  		    module_type = PAM_T_PASS;
@@ -19,7 +26,7 @@ Index: pam/libpam/pam_handlers.c
  		} else {
  		    /* Illegal module type */
  		    D(("_pam_init_handlers: bad module type: %s", tok));
-@@ -193,8 +197,10 @@
+@@ -193,8 +197,10 @@ static int _pam_parse_conf_file(pam_handle_t *pamh, FILE *f
  		_pam_set_default_control(actions, _PAM_ACTION_BAD);
  	    }
  
@@ -30,7 +37,7 @@ Index: pam/libpam/pam_handlers.c
  		if (substack) {
  		    res = _pam_add_handler(pamh, PAM_HT_SUBSTACK, other,
  				stack_level, module_type, actions, tok,
-@@ -205,13 +211,35 @@
+@@ -205,13 +211,35 @@ static int _pam_parse_conf_file(pam_handle_t *pamh, FILE *f
  			return PAM_ABORT;
  		    }
  		}

@@ -1,12 +1,17 @@
-Description: Support nullok_secure as a deprecated alias for nullok
-Author: Steve Langasek <vorlon@debian.org>
-Last-Update: 2020-08-11
+From: Steve Langasek <vorlon@debian.org>
+Date: Mon, 11 Sep 2023 14:00:42 -0600
+Subject: Support nullok_secure as a deprecated alias for nullok
 
-Index: pam/modules/pam_unix/support.h
-===================================================================
---- pam.orig/modules/pam_unix/support.h
-+++ pam/modules/pam_unix/support.h
-@@ -102,8 +102,9 @@
+Last-Update: 2020-08-11
+---
+ modules/pam_unix/support.h | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/modules/pam_unix/support.h b/modules/pam_unix/support.h
+index 91e7478..e15ee98 100644
+--- a/modules/pam_unix/support.h
++++ b/modules/pam_unix/support.h
+@@ -102,8 +102,9 @@ typedef struct {
  #define UNIX_YESCRYPT_PASS       32     /* new password hashes will use yescrypt */
  #define UNIX_NULLRESETOK         33     /* allow empty password if password reset is enforced */
  #define UNIX_OBSCURE_CHECKS      34	/* enable obscure checks on passwords */
@@ -17,7 +22,7 @@ Index: pam/modules/pam_unix/support.h
  
  #define UNIX_DES_CRYPT(ctrl)	(off(UNIX_MD5_PASS,ctrl)&&off(UNIX_BIGCRYPT,ctrl)&&off(UNIX_SHA256_PASS,ctrl)&&off(UNIX_SHA512_PASS,ctrl)&&off(UNIX_BLOWFISH_PASS,ctrl)&&off(UNIX_GOST_YESCRYPT_PASS,ctrl)&&off(UNIX_YESCRYPT_PASS,ctrl))
  
-@@ -147,6 +148,7 @@
+@@ -147,6 +148,7 @@ static const UNIX_Ctrls unix_args[UNIX_CTRLS_] =
  /* UNIX_YESCRYPT_PASS */       {"yescrypt",         _ALL_ON_^(0x6EC22000ULL),  0x40000000, 1},
  /* UNIX_NULLRESETOK */         {"nullresetok",      _ALL_ON_,                  0x80000000, 0},
  /* UNIX_OBSCURE_CHECKS */      {"obscure",          _ALL_ON_,                 0x100000000, 0},

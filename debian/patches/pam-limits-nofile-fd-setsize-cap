@@ -1,5 +1,7 @@
 From: Robie Basak <robie.basak@ubuntu.com>
-Subject: pam_limits: cap the default soft nofile limit read from pid 1 to FD_SETSIZE
+Date: Mon, 11 Sep 2023 14:00:42 -0600
+Subject: pam_limits: cap the default soft nofile limit read from pid 1 to
+ FD_SETSIZE
 
 Cap the default soft nofile limit read from pid 1 to FD_SETSIZE since
 larger values can cause problems with fd_set overflow and systemd sets
@@ -38,12 +40,15 @@ Forwarded: no
 Reviewed-by: Adam Conrad <adconrad@ubuntu.com>
 Reviewed-by: Martin Pitt <martin.pitt@ubuntu.com>
 Last-Update: 2015-04-22
+---
+ modules/pam_limits/pam_limits.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
 
-Index: pam/modules/pam_limits/pam_limits.c
-===================================================================
---- pam.orig/modules/pam_limits/pam_limits.c
-+++ pam/modules/pam_limits/pam_limits.c
-@@ -450,6 +450,14 @@
+diff --git a/modules/pam_limits/pam_limits.c b/modules/pam_limits/pam_limits.c
+index bb81559..60c809b 100644
+--- a/modules/pam_limits/pam_limits.c
++++ b/modules/pam_limits/pam_limits.c
+@@ -460,6 +460,14 @@ static void parse_kernel_limits(pam_handle_t *pamh, struct pam_limit_s *pl, int
          pl->limits[i].src_hard = LIMITS_DEF_KERNEL;
      }
      fclose(limitsfile);

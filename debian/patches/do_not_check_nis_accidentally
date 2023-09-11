@@ -1,3 +1,7 @@
+From: Sam Hartman <hartmans@debian.org>
+Date: Mon, 11 Sep 2023 14:00:42 -0600
+Subject: do_not_check_nis_accidentally
+
 Patch for Debian bug #469635
 
 Always call _unix_getpwnam() consistent with the value of the 'nis'
@@ -6,12 +10,15 @@ option, so that we only grab from the backends we're expecting.
 Authors: Quentin Godfroy <godfroy@clipper.ens.fr>
 
 Upstream status: should be submitted
+---
+ modules/pam_unix/pam_unix_passwd.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-Index: pam/modules/pam_unix/pam_unix_passwd.c
-===================================================================
---- pam.orig/modules/pam_unix/pam_unix_passwd.c
-+++ pam/modules/pam_unix/pam_unix_passwd.c
-@@ -669,7 +669,7 @@
+diff --git a/modules/pam_unix/pam_unix_passwd.c b/modules/pam_unix/pam_unix_passwd.c
+index 5b81343..78f8e20 100644
+--- a/modules/pam_unix/pam_unix_passwd.c
++++ b/modules/pam_unix/pam_unix_passwd.c
+@@ -660,7 +660,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
  		return PAM_USER_UNKNOWN;
  	} else {
  		struct passwd *pwd;

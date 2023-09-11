@@ -1,14 +1,20 @@
-Description: Make documentation reproducible
- Add LC_ALL=C.UTF-8 to w3m to avoid changes in the output when build the
- documentation with different locales.
-Author: Juan Picca <jumapico@gmail.com>, Steve Langasek <vorlon@debian.org>
+From: "Juan Picca jumapico@gmail.com, Steve Langasek" <vorlon@debian.org>
+Date: Mon, 11 Sep 2023 14:00:42 -0600
+Subject: Make documentation reproducible
+
 Last-Update: 2019-01-06
 
-Index: pam/configure.ac
-===================================================================
---- pam.orig/configure.ac
-+++ pam/configure.ac
-@@ -585,7 +585,7 @@
+Add LC_ALL=C.UTF-8 to w3m to avoid changes in the output when build the
+documentation with different locales.
+---
+ configure.ac | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/configure.ac b/configure.ac
+index b9b0f83..5f11912 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -647,7 +647,7 @@ JH_CHECK_XML_CATALOG([http://docbook.sourceforge.net/release/xsl-ns/current/manp
  
  AC_PATH_PROG([BROWSER], [w3m])
  if test -n "$BROWSER"; then

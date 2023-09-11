@@ -1,13 +1,20 @@
+From: Sam Hartman <hartmans@debian.org>
+Date: Mon, 11 Sep 2023 14:00:42 -0600
+Subject: _nis_cleanup
+
 Patch from Philippe Troin    <phil@fifi.org>
 
 Originally this included a bunch of changes to locking, but the more
 recent code pulled from Linux_pam CVS seems to fix that issue.
+---
+ modules/pam_unix/pam_unix_passwd.c | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
 
-Index: pam/modules/pam_unix/pam_unix_passwd.c
-===================================================================
---- pam.orig/modules/pam_unix/pam_unix_passwd.c
-+++ pam/modules/pam_unix/pam_unix_passwd.c
-@@ -708,9 +708,12 @@
+diff --git a/modules/pam_unix/pam_unix_passwd.c b/modules/pam_unix/pam_unix_passwd.c
+index 652f3c5..5b81343 100644
+--- a/modules/pam_unix/pam_unix_passwd.c
++++ b/modules/pam_unix/pam_unix_passwd.c
+@@ -699,9 +699,12 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
  				    "password - (old) token not obtained");
  				return retval;
  			}

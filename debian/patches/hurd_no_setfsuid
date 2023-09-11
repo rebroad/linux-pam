@@ -1,14 +1,21 @@
+From: Sam Hartman <hartmans@debian.org>
+Date: Mon, 11 Sep 2023 14:00:42 -0600
+Subject: hurd_no_setfsuid
+
 On systems without setfsuid(), use setreuid() instead.
 
 Authors: Steve Langasek <vorlon@debian.org>
 
 Upstream status: to be forwarded, now that pam_modutil_{drop,regain}_priv
  are implemented
+---
+ libpam/pam_modutil_priv.c | 40 ++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 40 insertions(+)
 
-Index: pam/libpam/pam_modutil_priv.c
-===================================================================
---- pam.orig/libpam/pam_modutil_priv.c
-+++ pam/libpam/pam_modutil_priv.c
+diff --git a/libpam/pam_modutil_priv.c b/libpam/pam_modutil_priv.c
+index a463e06..7df6e6b 100644
+--- a/libpam/pam_modutil_priv.c
++++ b/libpam/pam_modutil_priv.c
 @@ -14,7 +14,9 @@
  #include <syslog.h>
  #include <pwd.h>

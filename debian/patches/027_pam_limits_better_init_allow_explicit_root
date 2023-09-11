@@ -1,24 +1,120 @@
-Description: Allow explicit limits for root and reset limits on each session
- When crossing session boundaries (such as when su'ing from one user to
- another), if the target account has no limit specified in limits.conf we
- want to use the default, not the current value configured for the
- source account.
- .
- If /proc/1/limits is unavailable, fall back to a set of hard-coded values
- that shadow the currently known defaults on Linux.
- .
- Also, don't apply wildcard limits to the root account; only apply limits to
- root that reference root by name.
-Author: Peter Paluch <peterp@frcatel.fri.utc.sk>,
- Ben Collins <bcollins@debian.org>,
- Steve Langasek <vorlon@debian.org>,
+From: Peter Paluch <peterp@frcatel.fri.utc.sk>
+Date: Mon, 11 Sep 2023 14:00:42 -0600
+Subject: Allow explicit limits for root and reset limits on each session
+
 Bug-Debian: http://bugs.debian.org/63230
-Index: pam/modules/pam_limits/pam_limits.c
+
+When crossing session boundaries (such as when su'ing from one user to
+another), if the target account has no limit specified in limits.conf we
+want to use the default, not the current value configured for the
+source account.
+
+If /proc/1/limits is unavailable, fall back to a set of hard-coded values
+that shadow the currently known defaults on Linux.
+
+Also, don't apply wildcard limits to the root account; only apply limits to
+root that reference root by name.
 ===================================================================
---- pam.orig/modules/pam_limits/pam_limits.c
-+++ pam/modules/pam_limits/pam_limits.c
-@@ -47,6 +47,14 @@
+---
+ modules/pam_limits/README            |  1 +
+ modules/pam_limits/limits.conf       |  4 ++
+ modules/pam_limits/limits.conf.5     |  5 ++
+ modules/pam_limits/limits.conf.5.xml |  6 +++
+ modules/pam_limits/pam_limits.c      | 88 ++++++++++++++++++++++++++++++++----
+ 5 files changed, 95 insertions(+), 9 deletions(-)
+
+diff --git a/modules/pam_limits/README b/modules/pam_limits/README
+index 98264b9..dc560ef 100644
+--- a/modules/pam_limits/README
++++ b/modules/pam_limits/README
+@@ -68,6 +68,7 @@ These are some example lines which might be specified in /etc/security/
+ limits.conf.
+ 
+ *               soft    core            0
++root            hard    core            100000
+ *               hard    nofile          512
+ @student        hard    nproc           20
+ @faculty        soft    nproc           20
+diff --git a/modules/pam_limits/limits.conf b/modules/pam_limits/limits.conf
+index 9b1d624..6b3865c 100644
+--- a/modules/pam_limits/limits.conf
++++ b/modules/pam_limits/limits.conf
+@@ -22,6 +22,9 @@
+ #        - the wildcard *, for default entry
+ #        - the wildcard %, can be also used with %group syntax,
+ #                 for maxlogin limit
++#        - NOTE: group and wildcard limits are not applied to root.
++#          To apply a limit to the root user, <domain> must be
++#          the literal username root.
+ #
+ #<type> can have the two values:
+ #        - "soft" for enforcing the soft limits
+@@ -52,6 +55,7 @@
+ #
+ 
+ #*               soft    core            0
++#root            hard    core            100000
+ #*               hard    rss             10000
+ #@student        hard    nproc           20
+ #@faculty        soft    nproc           20
+diff --git a/modules/pam_limits/limits.conf.5 b/modules/pam_limits/limits.conf.5
+index f197ccd..ce0ca35 100644
+--- a/modules/pam_limits/limits.conf.5
++++ b/modules/pam_limits/limits.conf.5
+@@ -145,6 +145,10 @@ a gid specified as
+ \fB%:\fR\fI<gid>\fR
+ applicable to maxlogins limit only\&. It limits the total number of logins of all users that are member of the group with the specified gid\&.
+ .RE
++.sp
++\fBNOTE:\fR
++group and wildcard limits are not applied to the root user\&. To set a limit for the root user, this field must contain the literal username
++\fBroot\fR\&.
+ .RE
+ .PP
+ <type>
+@@ -327,6 +331,7 @@ These are some example lines which might be specified in
+ .\}
+ .nf
+ *               soft    core            0
++root            hard    core            100000
+ *               hard    nofile          512
+ @student        hard    nproc           20
+ @faculty        soft    nproc           20
+diff --git a/modules/pam_limits/limits.conf.5.xml b/modules/pam_limits/limits.conf.5.xml
+index 506afda..f6f7d87 100644
+--- a/modules/pam_limits/limits.conf.5.xml
++++ b/modules/pam_limits/limits.conf.5.xml
+@@ -89,6 +89,11 @@
+               </para>
+             </listitem>
+           </itemizedlist>
++	  <para>
++	    <emphasis remap='B'>NOTE:</emphasis> group and wildcard limits are not
++	    applied to the root user.  To set a limit for the root user, this field
++	    must contain the literal username <emphasis remap='B'>root</emphasis>.
++	  </para>
+         </listitem>
+       </varlistentry>
+ 
+@@ -326,6 +331,7 @@
+     </para>
+     <programlisting>
+ *               soft    core            0
++root            hard    core            100000
+ *               hard    nofile          512
+ @student        hard    nproc           20
+ @faculty        soft    nproc           20
+diff --git a/modules/pam_limits/pam_limits.c b/modules/pam_limits/pam_limits.c
+index 39d99f4..601d926 100644
+--- a/modules/pam_limits/pam_limits.c
++++ b/modules/pam_limits/pam_limits.c
+@@ -47,10 +47,18 @@
  #include <libaudit.h>
+ #endif
+ 
++
+ #ifndef PR_SET_NO_NEW_PRIVS
+ # define PR_SET_NO_NEW_PRIVS 38 /* from <linux/prctl.h> */
  #endif
  
 +#ifndef MLOCK_LIMIT
@@ -27,12 +123,11 @@ Index: pam/modules/pam_limits/pam_limits.c
 +#else
 +#define MLOCK_LIMIT (64*1024)
 +#endif
-+#endif
 +
  /* Module defines */
  #define LINE_LENGTH 1024
  
-@@ -84,6 +92,7 @@
+@@ -88,6 +96,7 @@ struct user_limits_struct {
  
  /* internal data */
  struct pam_limit_s {
@@ -40,7 +135,7 @@ Index: pam/modules/pam_limits/pam_limits.c
      int login_limit;     /* the max logins limit */
      int login_limit_def; /* which entry set the login limit */
      int flag_numsyslogins; /* whether to limit logins only for a
-@@ -447,9 +456,18 @@
+@@ -457,9 +466,18 @@ static int init_limits(pam_handle_t *pamh, struct pam_limit_s *pl, int ctrl)
  {
      int i;
      int retval = PAM_SUCCESS;
@@ -59,7 +154,7 @@ Index: pam/modules/pam_limits/pam_limits.c
      for(i = 0; i < RLIM_NLIMITS; i++) {
  	int r = getrlimit(i, &pl->limits[i].limit);
  	if (r == -1) {
-@@ -465,18 +483,68 @@
+@@ -475,18 +493,68 @@ static int init_limits(pam_handle_t *pamh, struct pam_limit_s *pl, int ctrl)
      }
  
  #ifdef __linux__
@@ -134,7 +229,7 @@ Index: pam/modules/pam_limits/pam_limits.c
  
      errno = 0;
      pl->priority = getpriority (PRIO_PROCESS, 0);
-@@ -881,7 +949,7 @@
+@@ -895,7 +963,7 @@ parse_config_file(pam_handle_t *pamh, const char *uname, uid_t uid, gid_t gid,
  
              if (strcmp(uname, domain) == 0) /* this user have a limit */
                  process_limit(pamh, LIMITS_DEF_USER, ltype, item, value, ctrl, pl);
@@ -143,7 +238,7 @@ Index: pam/modules/pam_limits/pam_limits.c
  		if (ctrl & PAM_DEBUG_ARG) {
  			pam_syslog(pamh, LOG_DEBUG,
  				   "checking if %s is in group %s",
-@@ -907,7 +975,7 @@
+@@ -921,7 +989,7 @@ parse_config_file(pam_handle_t *pamh, const char *uname, uid_t uid, gid_t gid,
  			    process_limit(pamh, LIMITS_DEF_GROUP, ltype, item, value, ctrl,
  					  pl);
  		}
@@ -152,7 +247,7 @@ Index: pam/modules/pam_limits/pam_limits.c
  		if (ctrl & PAM_DEBUG_ARG) {
  			pam_syslog(pamh, LOG_DEBUG,
  				   "checking if %s is in group %s",
-@@ -941,7 +1009,7 @@
+@@ -955,7 +1023,7 @@ parse_config_file(pam_handle_t *pamh, const char *uname, uid_t uid, gid_t gid,
              } else {
  		switch(rngtype) {
  		    case LIMIT_RANGE_NONE:
@@ -161,93 +256,12 @@ Index: pam/modules/pam_limits/pam_limits.c
  			    process_limit(pamh, LIMITS_DEF_DEFAULT, ltype, item, value, ctrl,
  					  pl);
  			break;
-@@ -1134,6 +1202,8 @@
+@@ -1247,6 +1315,8 @@ pam_sm_open_session (pam_handle_t *pamh, int flags UNUSED,
          return PAM_ABORT;
      }
  
 +    if (pwd->pw_uid == 0)
 +        pl->root = 1;
-     retval = parse_config_file(pamh, pwd->pw_name, pwd->pw_uid, pwd->pw_gid, ctrl, pl);
+     retval = parse_config_file(pamh, pwd->pw_name, pwd->pw_uid, pwd->pw_gid,
+ 			       ctrl, pl, conf_file_set_by_user);
      if (retval == PAM_IGNORE) {
- 	D(("the configuration file ('%s') has an applicable '<domain> -' entry", CONF_FILE));
-Index: pam/modules/pam_limits/limits.conf
-===================================================================
---- pam.orig/modules/pam_limits/limits.conf
-+++ pam/modules/pam_limits/limits.conf
-@@ -22,6 +22,9 @@
- #        - the wildcard *, for default entry
- #        - the wildcard %, can be also used with %group syntax,
- #                 for maxlogin limit
-+#        - NOTE: group and wildcard limits are not applied to root.
-+#          To apply a limit to the root user, <domain> must be
-+#          the literal username root.
- #
- #<type> can have the two values:
- #        - "soft" for enforcing the soft limits
-@@ -52,6 +55,7 @@
- #
- 
- #*               soft    core            0
-+#root            hard    core            100000
- #*               hard    rss             10000
- #@student        hard    nproc           20
- #@faculty        soft    nproc           20
-Index: pam/modules/pam_limits/limits.conf.5.xml
-===================================================================
---- pam.orig/modules/pam_limits/limits.conf.5.xml
-+++ pam/modules/pam_limits/limits.conf.5.xml
-@@ -96,6 +96,11 @@
-               </para>
-             </listitem>
-           </itemizedlist>
-+	  <para>
-+	    <emphasis remap='B'>NOTE:</emphasis> group and wildcard limits are not
-+	    applied to the root user.  To set a limit for the root user, this field
-+	    must contain the literal username <emphasis remap='B'>root</emphasis>.
-+	  </para>
-         </listitem>
-       </varlistentry>
- 
-@@ -333,6 +338,7 @@
-     </para>
-     <programlisting>
- *               soft    core            0
-+root            hard    core            100000
- *               hard    nofile          512
- @student        hard    nproc           20
- @faculty        soft    nproc           20
-Index: pam/modules/pam_limits/limits.conf.5
-===================================================================
---- pam.orig/modules/pam_limits/limits.conf.5
-+++ pam/modules/pam_limits/limits.conf.5
-@@ -145,6 +145,10 @@
- \fB%:\fR\fI<gid>\fR
- applicable to maxlogins limit only\&. It limits the total number of logins of all users that are member of the group with the specified gid\&.
- .RE
-+.sp
-+\fBNOTE:\fR
-+group and wildcard limits are not applied to the root user\&. To set a limit for the root user, this field must contain the literal username
-+\fBroot\fR\&.
- .RE
- .PP
- \fB<type>\fR
-@@ -327,6 +331,7 @@
- .\}
- .nf
- *               soft    core            0
-+root            hard    core            100000
- *               hard    nofile          512
- @student        hard    nproc           20
- @faculty        soft    nproc           20
-Index: pam/modules/pam_limits/README
-===================================================================
---- pam.orig/modules/pam_limits/README
-+++ pam/modules/pam_limits/README
-@@ -56,6 +56,7 @@
- limits.conf.
- 
- *               soft    core            0
-+root            hard    core            100000
- *               hard    nofile          512
- @student        hard    nproc           20
- @faculty        soft    nproc           20

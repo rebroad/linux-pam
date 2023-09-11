@@ -1,3 +1,7 @@
+From: Sam Hartman <hartmans@debian.org>
+Date: Mon, 11 Sep 2023 14:00:42 -0600
+Subject: lib_security_multiarch_compat
+
 Unqualified module paths should always be looked up in *both* the default
 module dir, *and* the ISA dir.  That's what paths are for.
 
@@ -10,12 +14,15 @@ Upstream status: not ready to be committed - this needs tweaked, we're
 currently abusing the existing variables and inverting their meaning in
 order to get everything installed where we want it and get absolute paths
 the way we want them.
+---
+ libpam/pam_handlers.c | 34 ++++++++++++++++++++++------------
+ 1 file changed, 22 insertions(+), 12 deletions(-)
 
-Index: pam-1.4.0/libpam/pam_handlers.c
-===================================================================
---- pam-1.4.0.orig/libpam/pam_handlers.c
-+++ pam-1.4.0/libpam/pam_handlers.c
-@@ -735,7 +735,27 @@ _pam_load_module(pam_handle_t *pamh, con
+diff --git a/libpam/pam_handlers.c b/libpam/pam_handlers.c
+index c7045d2..dc5f81f 100644
+--- a/libpam/pam_handlers.c
++++ b/libpam/pam_handlers.c
+@@ -737,7 +737,27 @@ _pam_load_module(pam_handle_t *pamh, const char *mod_path, int handler_type)
  	success = PAM_ABORT;
  
  	D(("_pam_load_module: _pam_dlopen(%s)", mod_path));
@@ -44,7 +51,7 @@ Index: pam-1.4.0/libpam/pam_handlers.c
  	D(("_pam_load_module: _pam_dlopen'ed"));
  	D(("_pam_load_module: dlopen'ed"));
  	if (mod->dl_handle == NULL) {
-@@ -812,7 +832,6 @@ int _pam_add_handler(pam_handle_t *pamh
+@@ -814,7 +834,6 @@ int _pam_add_handler(pam_handle_t *pamh
      struct handler **handler_p2;
      struct handlers *the_handlers;
      const char *sym, *sym2;
@@ -52,7 +59,7 @@ Index: pam-1.4.0/libpam/pam_handlers.c
      servicefn func, func2;
      int mod_type = PAM_MT_FAULTY_MOD;
  
-@@ -824,16 +843,7 @@ int _pam_add_handler(pam_handle_t *pamh
+@@ -826,16 +845,7 @@ int _pam_add_handler(pam_handle_t *pamh
  
      if ((handler_type == PAM_HT_MODULE || handler_type == PAM_HT_SILENT_MODULE) &&
  	mod_path != NULL) {

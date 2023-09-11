@@ -1,8 +1,17 @@
-Index: pam/modules/pam_mkhomedir/mkhomedir_helper.c
+From: Sam Hartman <hartmans@debian.org>
+Date: Mon, 11 Sep 2023 14:00:42 -0600
+Subject: pam_mkhomedir_stat_before_opendir
+
 ===================================================================
---- pam.orig/modules/pam_mkhomedir/mkhomedir_helper.c
-+++ pam/modules/pam_mkhomedir/mkhomedir_helper.c
-@@ -39,6 +39,7 @@
+---
+ modules/pam_mkhomedir/mkhomedir_helper.c | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/modules/pam_mkhomedir/mkhomedir_helper.c b/modules/pam_mkhomedir/mkhomedir_helper.c
+index 3213f02..643d5d0 100644
+--- a/modules/pam_mkhomedir/mkhomedir_helper.c
++++ b/modules/pam_mkhomedir/mkhomedir_helper.c
+@@ -39,6 +39,7 @@ create_homedir(const struct passwd *pwd,
     DIR *d;
     struct dirent *dent;
     int retval = PAM_SESSION_ERR;
@@ -10,7 +19,7 @@ Index: pam/modules/pam_mkhomedir/mkhomedir_helper.c
  
     /* Create the new directory */
     if (mkdir(dest, 0700) && errno != EEXIST)
-@@ -54,6 +55,12 @@
+@@ -54,6 +55,12 @@ create_homedir(const struct passwd *pwd,
        goto go_out;
     }
  
