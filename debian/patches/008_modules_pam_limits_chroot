@@ -11,10 +11,10 @@ Subject: _modules_pam_limits_chroot
  4 files changed, 35 insertions(+), 3 deletions(-)
 
 diff --git a/modules/pam_limits/limits.conf b/modules/pam_limits/limits.conf
-index e8a746c..9b1d624 100644
+index c6b058a..6b3865c 100644
 --- a/modules/pam_limits/limits.conf
 +++ b/modules/pam_limits/limits.conf
-@@ -46,6 +46,7 @@
+@@ -49,6 +49,7 @@
  #        - msgqueue - max memory used by POSIX message queues (bytes)
  #        - nice - max nice priority allowed to raise to values: [-20, 19]
  #        - rtprio - max realtime priority
@@ -22,7 +22,7 @@ index e8a746c..9b1d624 100644
  #
  #<domain>      <type>  <item>         <value>
  #
-@@ -56,6 +57,7 @@
+@@ -60,6 +61,7 @@
  #@faculty        soft    nproc           20
  #@faculty        hard    nproc           50
  #ftp             hard    nproc           0
@@ -31,10 +31,10 @@ index e8a746c..9b1d624 100644
  
  # End of file
 diff --git a/modules/pam_limits/limits.conf.5 b/modules/pam_limits/limits.conf.5
-index 25f4459..f197ccd 100644
+index 32c4b2f..ce0ca35 100644
 --- a/modules/pam_limits/limits.conf.5
 +++ b/modules/pam_limits/limits.conf.5
-@@ -279,6 +279,11 @@ rtprio
+@@ -283,6 +283,11 @@ rtprio
  .RS 4
  maximum realtime priority allowed for non\-privileged processes (Linux 2\&.6\&.12 and higher)
  .RE
@@ -47,10 +47,10 @@ index 25f4459..f197ccd 100644
  .PP
  All items support the values
 diff --git a/modules/pam_limits/limits.conf.5.xml b/modules/pam_limits/limits.conf.5.xml
-index 2177da1..506afda 100644
+index 9f2662a..f6f7d87 100644
 --- a/modules/pam_limits/limits.conf.5.xml
 +++ b/modules/pam_limits/limits.conf.5.xml
-@@ -266,6 +266,12 @@
+@@ -271,6 +271,12 @@
                    (Linux 2.6.12 and higher)</para>
                </listitem>
              </varlistentry>
@@ -64,10 +64,10 @@ index 2177da1..506afda 100644
          </listitem>
        </varlistentry>
 diff --git a/modules/pam_limits/pam_limits.c b/modules/pam_limits/pam_limits.c
-index 87bb4b7..39d99f4 100644
+index 746c441..529d2fc 100644
 --- a/modules/pam_limits/pam_limits.c
 +++ b/modules/pam_limits/pam_limits.c
-@@ -94,6 +94,7 @@ struct pam_limit_s {
+@@ -104,6 +104,7 @@ struct pam_limit_s {
  			      specific user or to count all logins */
      int priority;	 /* the priority to run user process with */
      int nonewprivs;	/* whether to prctl(PR_SET_NO_NEW_PRIVS) */
@@ -75,7 +75,7 @@ index 87bb4b7..39d99f4 100644
      struct user_limits_struct limits[RLIM_NLIMITS];
      const char *conf_file;
      int utmp_after_pam_call;
-@@ -105,6 +106,7 @@ struct pam_limit_s {
+@@ -115,6 +116,7 @@ struct pam_limit_s {
  
  #define LIMIT_PRI RLIM_NLIMITS+3
  #define LIMIT_NONEWPRIVS RLIM_NLIMITS+4
@@ -83,7 +83,7 @@ index 87bb4b7..39d99f4 100644
  
  #define LIMIT_SOFT  1
  #define LIMIT_HARD  2
-@@ -493,6 +495,8 @@ static int init_limits(pam_handle_t *pamh, struct pam_limit_s *pl, int ctrl)
+@@ -570,6 +572,8 @@ static int init_limits(pam_handle_t *pamh, struct pam_limit_s *pl, int ctrl)
      pl->login_limit = -2;
      pl->login_limit_def = LIMITS_DEF_NONE;
  
@@ -92,7 +92,7 @@ index 87bb4b7..39d99f4 100644
      return retval;
  }
  
-@@ -600,6 +604,8 @@ process_limit (const pam_handle_t *pamh, int source, const char *lim_type,
+@@ -677,6 +681,8 @@ process_limit (const pam_handle_t *pamh, int source, const char *lim_type,
  	limit_item = LIMIT_PRI;
      } else if (strcmp(lim_item, "nonewprivs") == 0) {
  	limit_item = LIMIT_NONEWPRIVS;
@@ -101,7 +101,7 @@ index 87bb4b7..39d99f4 100644
      } else {
          pam_syslog(pamh, LOG_DEBUG, "unknown limit item '%s'", lim_item);
          return;
-@@ -649,9 +655,9 @@ process_limit (const pam_handle_t *pamh, int source, const char *lim_type,
+@@ -726,9 +732,9 @@ process_limit (const pam_handle_t *pamh, int source, const char *lim_type,
  			pam_syslog(pamh, LOG_DEBUG,
  				   "wrong limit value '%s' for limit type '%s'",
  				   lim_value, lim_type);
@@ -113,7 +113,7 @@ index 87bb4b7..39d99f4 100644
  #ifdef __USE_FILE_OFFSET64
  		rlimit_value = strtoull (lim_value, &endptr, 10);
  #else
-@@ -726,7 +732,11 @@ process_limit (const pam_handle_t *pamh, int source, const char *lim_type,
+@@ -803,7 +809,11 @@ process_limit (const pam_handle_t *pamh, int source, const char *lim_type,
  	break;
      }
  
@@ -126,7 +126,7 @@ index 87bb4b7..39d99f4 100644
  	 && (limit_item != LIMIT_NUMSYSLOGINS)
  	 && (limit_item != LIMIT_PRI)
  	 && (limit_item != LIMIT_NONEWPRIVS) ) {
-@@ -1084,6 +1094,15 @@ static int setup_limits(pam_handle_t *pamh,
+@@ -1163,6 +1173,15 @@ static int setup_limits(pam_handle_t *pamh,
  	}
      }
  

@@ -1,8 +1,10 @@
 From: Sam Hartman <hartmans@debian.org>
 Date: Mon, 11 Sep 2023 14:00:42 -0600
-Subject: _modules_pam_unix
+Subject: pam_unix: obscure checks
 
-===================================================================
+* Bring in the obscure checks that used to live in shadow so we can still support them
+
+* Set default minimum password length to 6
 ---
  modules/pam_unix/Makefile.am       |   2 +-
  modules/pam_unix/README            |  36 ++++++-

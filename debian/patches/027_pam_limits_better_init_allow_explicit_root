@@ -20,8 +20,8 @@ root that reference root by name.
  modules/pam_limits/limits.conf       |  4 ++
  modules/pam_limits/limits.conf.5     |  5 ++
  modules/pam_limits/limits.conf.5.xml |  6 +++
- modules/pam_limits/pam_limits.c      | 88 ++++++++++++++++++++++++++++++++----
- 5 files changed, 95 insertions(+), 9 deletions(-)
+ modules/pam_limits/pam_limits.c      | 89 ++++++++++++++++++++++++++++++++----
+ 5 files changed, 96 insertions(+), 9 deletions(-)
 
 diff --git a/modules/pam_limits/README b/modules/pam_limits/README
 index 98264b9..dc560ef 100644
@@ -36,7 +36,7 @@ index 98264b9..dc560ef 100644
  @student        hard    nproc           20
  @faculty        soft    nproc           20
 diff --git a/modules/pam_limits/limits.conf b/modules/pam_limits/limits.conf
-index 9b1d624..6b3865c 100644
+index e8a746c..c6b058a 100644
 --- a/modules/pam_limits/limits.conf
 +++ b/modules/pam_limits/limits.conf
 @@ -22,6 +22,9 @@
@@ -49,7 +49,7 @@ index 9b1d624..6b3865c 100644
  #
  #<type> can have the two values:
  #        - "soft" for enforcing the soft limits
-@@ -52,6 +55,7 @@
+@@ -51,6 +54,7 @@
  #
  
  #*               soft    core            0
@@ -58,7 +58,7 @@ index 9b1d624..6b3865c 100644
  #@student        hard    nproc           20
  #@faculty        soft    nproc           20
 diff --git a/modules/pam_limits/limits.conf.5 b/modules/pam_limits/limits.conf.5
-index f197ccd..ce0ca35 100644
+index 25f4459..32c4b2f 100644
 --- a/modules/pam_limits/limits.conf.5
 +++ b/modules/pam_limits/limits.conf.5
 @@ -145,6 +145,10 @@ a gid specified as
@@ -72,7 +72,7 @@ index f197ccd..ce0ca35 100644
  .RE
  .PP
  <type>
-@@ -327,6 +331,7 @@ These are some example lines which might be specified in
+@@ -322,6 +326,7 @@ These are some example lines which might be specified in
  .\}
  .nf
  *               soft    core            0
@@ -81,7 +81,7 @@ index f197ccd..ce0ca35 100644
  @student        hard    nproc           20
  @faculty        soft    nproc           20
 diff --git a/modules/pam_limits/limits.conf.5.xml b/modules/pam_limits/limits.conf.5.xml
-index 506afda..f6f7d87 100644
+index 2177da1..9f2662a 100644
 --- a/modules/pam_limits/limits.conf.5.xml
 +++ b/modules/pam_limits/limits.conf.5.xml
 @@ -89,6 +89,11 @@
@@ -96,7 +96,7 @@ index 506afda..f6f7d87 100644
          </listitem>
        </varlistentry>
  
-@@ -326,6 +331,7 @@
+@@ -320,6 +325,7 @@
      </para>
      <programlisting>
  *               soft    core            0
@@ -105,10 +105,10 @@ index 506afda..f6f7d87 100644
  @student        hard    nproc           20
  @faculty        soft    nproc           20
 diff --git a/modules/pam_limits/pam_limits.c b/modules/pam_limits/pam_limits.c
-index 39d99f4..601d926 100644
+index 87bb4b7..adda08b 100644
 --- a/modules/pam_limits/pam_limits.c
 +++ b/modules/pam_limits/pam_limits.c
-@@ -47,10 +47,18 @@
+@@ -47,10 +47,19 @@
  #include <libaudit.h>
  #endif
  
@@ -123,11 +123,12 @@ index 39d99f4..601d926 100644
 +#else
 +#define MLOCK_LIMIT (64*1024)
 +#endif
++#endif
 +
  /* Module defines */
  #define LINE_LENGTH 1024
  
-@@ -88,6 +96,7 @@ struct user_limits_struct {
+@@ -88,6 +97,7 @@ struct user_limits_struct {
  
  /* internal data */
  struct pam_limit_s {
@@ -135,7 +136,7 @@ index 39d99f4..601d926 100644
      int login_limit;     /* the max logins limit */
      int login_limit_def; /* which entry set the login limit */
      int flag_numsyslogins; /* whether to limit logins only for a
-@@ -457,9 +466,18 @@ static int init_limits(pam_handle_t *pamh, struct pam_limit_s *pl, int ctrl)
+@@ -455,9 +465,18 @@ static int init_limits(pam_handle_t *pamh, struct pam_limit_s *pl, int ctrl)
  {
      int i;
      int retval = PAM_SUCCESS;
@@ -154,7 +155,7 @@ index 39d99f4..601d926 100644
      for(i = 0; i < RLIM_NLIMITS; i++) {
  	int r = getrlimit(i, &pl->limits[i].limit);
  	if (r == -1) {
-@@ -475,18 +493,68 @@ static int init_limits(pam_handle_t *pamh, struct pam_limit_s *pl, int ctrl)
+@@ -473,18 +492,68 @@ static int init_limits(pam_handle_t *pamh, struct pam_limit_s *pl, int ctrl)
      }
  
  #ifdef __linux__
@@ -229,7 +230,7 @@ index 39d99f4..601d926 100644
  
      errno = 0;
      pl->priority = getpriority (PRIO_PROCESS, 0);
-@@ -895,7 +963,7 @@ parse_config_file(pam_handle_t *pamh, const char *uname, uid_t uid, gid_t gid,
+@@ -885,7 +954,7 @@ parse_config_file(pam_handle_t *pamh, const char *uname, uid_t uid, gid_t gid,
  
              if (strcmp(uname, domain) == 0) /* this user have a limit */
                  process_limit(pamh, LIMITS_DEF_USER, ltype, item, value, ctrl, pl);
@@ -238,7 +239,7 @@ index 39d99f4..601d926 100644
  		if (ctrl & PAM_DEBUG_ARG) {
  			pam_syslog(pamh, LOG_DEBUG,
  				   "checking if %s is in group %s",
-@@ -921,7 +989,7 @@ parse_config_file(pam_handle_t *pamh, const char *uname, uid_t uid, gid_t gid,
+@@ -911,7 +980,7 @@ parse_config_file(pam_handle_t *pamh, const char *uname, uid_t uid, gid_t gid,
  			    process_limit(pamh, LIMITS_DEF_GROUP, ltype, item, value, ctrl,
  					  pl);
  		}
@@ -247,7 +248,7 @@ index 39d99f4..601d926 100644
  		if (ctrl & PAM_DEBUG_ARG) {
  			pam_syslog(pamh, LOG_DEBUG,
  				   "checking if %s is in group %s",
-@@ -955,7 +1023,7 @@ parse_config_file(pam_handle_t *pamh, const char *uname, uid_t uid, gid_t gid,
+@@ -945,7 +1014,7 @@ parse_config_file(pam_handle_t *pamh, const char *uname, uid_t uid, gid_t gid,
              } else {
  		switch(rngtype) {
  		    case LIMIT_RANGE_NONE:
@@ -256,7 +257,7 @@ index 39d99f4..601d926 100644
  			    process_limit(pamh, LIMITS_DEF_DEFAULT, ltype, item, value, ctrl,
  					  pl);
  			break;
-@@ -1247,6 +1315,8 @@ pam_sm_open_session (pam_handle_t *pamh, int flags UNUSED,
+@@ -1228,6 +1297,8 @@ pam_sm_open_session (pam_handle_t *pamh, int flags UNUSED,
          return PAM_ABORT;
      }
  

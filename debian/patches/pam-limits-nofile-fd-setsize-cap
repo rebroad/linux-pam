@@ -45,10 +45,10 @@ Last-Update: 2015-04-22
  1 file changed, 8 insertions(+)
 
 diff --git a/modules/pam_limits/pam_limits.c b/modules/pam_limits/pam_limits.c
-index bb81559..60c809b 100644
+index adda08b..a58d424 100644
 --- a/modules/pam_limits/pam_limits.c
 +++ b/modules/pam_limits/pam_limits.c
-@@ -460,6 +460,14 @@ static void parse_kernel_limits(pam_handle_t *pamh, struct pam_limit_s *pl, int
+@@ -459,6 +459,14 @@ static void parse_kernel_limits(pam_handle_t *pamh, struct pam_limit_s *pl, int
          pl->limits[i].src_hard = LIMITS_DEF_KERNEL;
      }
      fclose(limitsfile);

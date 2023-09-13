@@ -55,7 +55,6 @@ Upstream status: maybe provide a backwards-compatibility link first?
  modules/pam_deny/pam_deny.8.xml                 |   2 +-
  modules/pam_echo/pam_echo.8                     |   2 +-
  modules/pam_echo/pam_echo.8.xml                 |   2 +-
- modules/pam_env/pam_env.8                       | 160 ------------------
  modules/pam_env/pam_env.8.xml                   |   2 +-
  modules/pam_env/pam_env.conf.5                  |   2 +-
  modules/pam_env/pam_env.conf.5.xml              |   2 +-
@@ -109,7 +108,6 @@ Upstream status: maybe provide a backwards-compatibility link first?
  modules/pam_rootok/pam_rootok.8.xml             |   2 +-
  modules/pam_securetty/pam_securetty.8           |   2 +-
  modules/pam_securetty/pam_securetty.8.xml       |   2 +-
- modules/pam_selinux/pam_selinux.8               | 151 -----------------
  modules/pam_selinux/pam_selinux.8.xml           |   2 +-
  modules/pam_sepermit/pam_sepermit.8             |   2 +-
  modules/pam_sepermit/pam_sepermit.8.xml         |   2 +-
@@ -140,11 +138,9 @@ Upstream status: maybe provide a backwards-compatibility link first?
  modules/pam_wheel/pam_wheel.8.xml               |   2 +-
  modules/pam_xauth/pam_xauth.8                   |   2 +-
  modules/pam_xauth/pam_xauth.8.xml               |   2 +-
- 131 files changed, 127 insertions(+), 788 deletions(-)
+ 129 files changed, 127 insertions(+), 477 deletions(-)
  delete mode 100644 doc/man/PAM.8
  delete mode 100644 doc/man/pam.8.xml
- delete mode 100644 modules/pam_env/pam_env.8
- delete mode 100644 modules/pam_selinux/pam_selinux.8
 
 diff --git a/doc/man/PAM.8 b/doc/man/PAM.8
 deleted file mode 100644
@@ -1056,172 +1052,6 @@ index 07b793d..cf2d006 100644
      </citerefentry></para>
    </refsect1>
  
-diff --git a/modules/pam_env/pam_env.8 b/modules/pam_env/pam_env.8
-deleted file mode 100644
-index f4e15f3..0000000
---- a/modules/pam_env/pam_env.8
-+++ /dev/null
-@@ -1,160 +0,0 @@
--'\" t
--.\"     Title: pam_env
--.\"    Author: [see the "AUTHOR" section]
--.\" Generator: DocBook XSL Stylesheets v1.79.2 <http://docbook.sf.net/>
--.\"      Date: 05/07/2023
--.\"    Manual: Linux-PAM Manual
--.\"    Source: Linux-PAM
--.\"  Language: English
--.\"
--.TH "PAM_ENV" "8" "05/07/2023" "Linux\-PAM" "Linux\-PAM Manual"
--.\" -----------------------------------------------------------------
--.\" * Define some portability stuff
--.\" -----------------------------------------------------------------
--.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
--.\" http://bugs.debian.org/507673
--.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
--.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
--.ie \n(.g .ds Aq \(aq
--.el       .ds Aq '
--.\" -----------------------------------------------------------------
--.\" * set default formatting
--.\" -----------------------------------------------------------------
--.\" disable hyphenation
--.nh
--.\" disable justification (adjust text to left margin only)
--.ad l
--.\" -----------------------------------------------------------------
--.\" * MAIN CONTENT STARTS HERE *
--.\" -----------------------------------------------------------------
--.SH "NAME"
--pam_env \- PAM module to set/unset environment variables
--.SH "SYNOPSIS"
--.HP \w'\fBpam_env\&.so\fR\ 'u
--\fBpam_env\&.so\fR [debug] [conffile=\fIconf\-file\fR] [envfile=\fIenv\-file\fR] [readenv=\fI0|1\fR] [user_envfile=\fIenv\-file\fR] [user_readenv=\fI0|1\fR]
--.SH "DESCRIPTION"
--.PP
--The pam_env PAM module allows the (un)setting of environment variables\&. Supported is the use of previously set environment variables as well as
--\fIPAM_ITEM\fRs such as
--\fIPAM_RHOST\fR\&.
--.PP
--By default rules for (un)setting of variables are taken from the config file
--/etc/security/pam_env\&.conf\&. An alternate file can be specified with the
--\fIconffile\fR
--option\&.
--.PP
--Second a file (/etc/environment
--by default) with simple
--\fIKEY=VAL\fR
--pairs on separate lines will be read\&. With the
--\fIenvfile\fR
--option an alternate file can be specified\&. And with the
--\fIreadenv\fR
--option this can be completely disabled\&.
--.PP
--Third it will read a user configuration file ($HOME/\&.pam_environment
--by default)\&. The default file can be changed with the
--\fIuser_envfile\fR
--option and it can be turned on and off with the
--\fIuser_readenv\fR
--option\&.
--.PP
--Since setting of PAM environment variables can have side effects to other modules, this module should be the last one on the stack\&.
--.SH "OPTIONS"
--.PP
--conffile=/path/to/pam_env\&.conf
--.RS 4
--Indicate an alternative
--pam_env\&.conf
--style configuration file to override the default\&. This can be useful when different services need different environments\&.
--.RE
--.PP
--debug
--.RS 4
--A lot of debug information is printed with
--\fBsyslog\fR(3)\&.
--.RE
--.PP
--envfile=/path/to/environment
--.RS 4
--Indicate an alternative
--environment
--file to override the default\&. The syntax are simple
--\fIKEY=VAL\fR
--pairs on separate lines\&. The
--\fIexport\fR
--instruction can be specified for bash compatibility, but will be ignored\&. This can be useful when different services need different environments\&.
--.RE
--.PP
--readenv=0|1
--.RS 4
--Turns on or off the reading of the file specified by envfile (0 is off, 1 is on)\&. By default this option is on\&.
--.RE
--.PP
--user_envfile=filename
--.RS 4
--Indicate an alternative
--\&.pam_environment
--file to override the default\&.The syntax is the same as for
--\fI/etc/security/pam_env\&.conf\fR\&. The filename is relative to the user home directory\&. This can be useful when different services need different environments\&.
--.RE
--.PP
--user_readenv=0|1
--.RS 4
--Turns on or off the reading of the user specific environment file\&. 0 is off, 1 is on\&. By default this option is off as user supplied environment variables in the PAM environment could affect behavior of subsequent modules in the stack without the consent of the system administrator\&.
--.sp
--Due to problematic security this functionality is deprecated since the 1\&.5\&.0 version and will be removed completely at some point in the future\&.
--.RE
--.SH "MODULE TYPES PROVIDED"
--.PP
--The
--\fBauth\fR
--and
--\fBsession\fR
--module types are provided\&.
--.SH "RETURN VALUES"
--.PP
--PAM_ABORT
--.RS 4
--Not all relevant data or options could be gotten\&.
--.RE
--.PP
--PAM_BUF_ERR
--.RS 4
--Memory buffer error\&.
--.RE
--.PP
--PAM_IGNORE
--.RS 4
--No pam_env\&.conf and environment file was found\&.
--.RE
--.PP
--PAM_SUCCESS
--.RS 4
--Environment variables were set\&.
--.RE
--.SH "FILES"
--.PP
--/etc/security/pam_env\&.conf
--.RS 4
--Default configuration file
--.RE
--.PP
--/etc/environment
--.RS 4
--Default environment file
--.RE
--.PP
--$HOME/\&.pam_environment
--.RS 4
--User specific environment file
--.RE
--.SH "SEE ALSO"
--.PP
--\fBpam_env.conf\fR(5),
--\fBpam.d\fR(5),
--\fBpam\fR(8),
--\fBenviron\fR(7)\&.
--.SH "AUTHOR"
--.PP
--pam_env was written by Dave Kinchlea <kinch@kinch\&.ark\&.com>\&.
 diff --git a/modules/pam_env/pam_env.8.xml b/modules/pam_env/pam_env.8.xml
 index fb172e1..a720d37 100644
 --- a/modules/pam_env/pam_env.8.xml
@@ -1911,163 +1741,6 @@ index 9038f5b..fcf0e88 100644
        </citerefentry>
      </para>
    </refsect1>
-diff --git a/modules/pam_selinux/pam_selinux.8 b/modules/pam_selinux/pam_selinux.8
-deleted file mode 100644
-index 260bc47..0000000
---- a/modules/pam_selinux/pam_selinux.8
-+++ /dev/null
-@@ -1,151 +0,0 @@
--'\" t
--.\"     Title: pam_selinux
--.\"    Author: [see the "AUTHOR" section]
--.\" Generator: DocBook XSL Stylesheets v1.79.2 <http://docbook.sf.net/>
--.\"      Date: 05/07/2023
--.\"    Manual: Linux-PAM Manual
--.\"    Source: Linux-PAM
--.\"  Language: English
--.\"
--.TH "PAM_SELINUX" "8" "05/07/2023" "Linux\-PAM" "Linux\-PAM Manual"
--.\" -----------------------------------------------------------------
--.\" * Define some portability stuff
--.\" -----------------------------------------------------------------
--.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
--.\" http://bugs.debian.org/507673
--.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
--.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
--.ie \n(.g .ds Aq \(aq
--.el       .ds Aq '
--.\" -----------------------------------------------------------------
--.\" * set default formatting
--.\" -----------------------------------------------------------------
--.\" disable hyphenation
--.nh
--.\" disable justification (adjust text to left margin only)
--.ad l
--.\" -----------------------------------------------------------------
--.\" * MAIN CONTENT STARTS HERE *
--.\" -----------------------------------------------------------------
--.SH "NAME"
--pam_selinux \- PAM module to set the default security context
--.SH "SYNOPSIS"
--.HP \w'\fBpam_selinux\&.so\fR\ 'u
--\fBpam_selinux\&.so\fR [open] [close] [restore] [nottys] [debug] [verbose] [select_context] [env_params] [use_current_range]
--.SH "DESCRIPTION"
--.PP
--pam_selinux is a PAM module that sets up the default SELinux security context for the next executed process\&.
--.PP
--When a new session is started, the open_session part of the module computes and sets up the execution security context used for the next
--\fBexecve\fR(2)
--call, the file security context for the controlling terminal, and the security context used for creating a new kernel keyring\&.
--.PP
--When the session is ended, the close_session part of the module restores old security contexts that were in effect before the change made by the open_session part of the module\&.
--.PP
--Adding pam_selinux into the PAM stack might disrupt behavior of other PAM modules which execute applications\&. To avoid that,
--\fIpam_selinux\&.so open\fR
--should be placed after such modules in the PAM stack, and
--\fIpam_selinux\&.so close\fR
--should be placed before them\&. When such a placement is not feasible,
--\fIpam_selinux\&.so restore\fR
--could be used to temporary restore original security contexts\&.
--.SH "OPTIONS"
--.PP
--open
--.RS 4
--Only execute the open_session part of the module\&.
--.RE
--.PP
--close
--.RS 4
--Only execute the close_session part of the module\&.
--.RE
--.PP
--restore
--.RS 4
--In open_session part of the module, temporarily restore the security contexts as they were before the previous call of the module\&. Another call of this module without the restore option will set up the new security contexts again\&.
--.RE
--.PP
--nottys
--.RS 4
--Do not setup security context of the controlling terminal\&.
--.RE
--.PP
--debug
--.RS 4
--Turn on debug messages via
--\fBsyslog\fR(3)\&.
--.RE
--.PP
--verbose
--.RS 4
--Attempt to inform the user when security context is set\&.
--.RE
--.PP
--select_context
--.RS 4
--Attempt to ask the user for a custom security context role\&. If MLS is on, ask also for sensitivity level\&.
--.RE
--.PP
--env_params
--.RS 4
--Attempt to obtain a custom security context role from PAM environment\&. If MLS is on, obtain also sensitivity level\&. This option and the select_context option are mutually exclusive\&. The respective PAM environment variables are
--\fISELINUX_ROLE_REQUESTED\fR,
--\fISELINUX_LEVEL_REQUESTED\fR, and
--\fISELINUX_USE_CURRENT_RANGE\fR\&. The first two variables are self describing and the last one if set to 1 makes the PAM module behave as if the use_current_range was specified on the command line of the module\&.
--.RE
--.PP
--use_current_range
--.RS 4
--Use the sensitivity level of the current process for the user context instead of the default level\&. Also suppresses asking of the sensitivity level from the user or obtaining it from PAM environment\&.
--.RE
--.SH "MODULE TYPES PROVIDED"
--.PP
--Only the
--\fBsession\fR
--module type is provided\&.
--.SH "RETURN VALUES"
--.PP
--PAM_SUCCESS
--.RS 4
--The security context was set successfully\&.
--.RE
--.PP
--PAM_SESSION_ERR
--.RS 4
--Unable to get or set a valid context\&.
--.RE
--.PP
--PAM_USER_UNKNOWN
--.RS 4
--The user is not known to the system\&.
--.RE
--.PP
--PAM_BUF_ERR
--.RS 4
--Memory allocation error\&.
--.RE
--.SH "EXAMPLES"
--.sp
--.if n \{\
--.RS 4
--.\}
--.nf
--auth     required  pam_unix\&.so
--session  required  pam_permit\&.so
--session  optional  pam_selinux\&.so
--    
--.fi
--.if n \{\
--.RE
--.\}
--.SH "SEE ALSO"
--.PP
--\fBexecve\fR(2),
--\fBtty\fR(4),
--\fBpam.d\fR(5),
--\fBpam\fR(8),
--\fBselinux\fR(8)
--.SH "AUTHOR"
--.PP
--pam_selinux was written by Dan Walsh <dwalsh@redhat\&.com>\&.
 diff --git a/modules/pam_selinux/pam_selinux.8.xml b/modules/pam_selinux/pam_selinux.8.xml
 index 3aa632c..7ec5daf 100644
 --- a/modules/pam_selinux/pam_selinux.8.xml
@@ -2420,10 +2093,10 @@ index a20c5f7..a69e1d6 100644
      </para>
    </refsect1>
 diff --git a/modules/pam_wheel/pam_wheel.8.xml b/modules/pam_wheel/pam_wheel.8.xml
-index 0e89002..c73aa7d 100644
+index b42e27d..86f2828 100644
 --- a/modules/pam_wheel/pam_wheel.8.xml
 +++ b/modules/pam_wheel/pam_wheel.8.xml
-@@ -225,7 +225,7 @@ su      auth     required       pam_unix.so
+@@ -210,7 +210,7 @@ su      auth     required       pam_unix.so
  	<refentrytitle>pam.d</refentrytitle><manvolnum>5</manvolnum>
        </citerefentry>,
        <citerefentry>

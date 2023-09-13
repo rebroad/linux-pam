@@ -15,10 +15,10 @@ Upstream status: submitted in <20070830171918.GB30563@dario.dodds.net>
  1 file changed, 13 insertions(+), 3 deletions(-)
 
 diff --git a/modules/pam_limits/pam_limits.c b/modules/pam_limits/pam_limits.c
-index acf4ec4..bb81559 100644
+index 529d2fc..da83b70 100644
 --- a/modules/pam_limits/pam_limits.c
 +++ b/modules/pam_limits/pam_limits.c
-@@ -1122,9 +1122,19 @@ static int setup_limits(pam_handle_t *pamh,
+@@ -1131,9 +1131,19 @@ static int setup_limits(pam_handle_t *pamh,
          if (pl->limits[i].limit.rlim_cur > pl->limits[i].limit.rlim_max)
              pl->limits[i].limit.rlim_cur = pl->limits[i].limit.rlim_max;
  	res = setrlimit(i, &pl->limits[i].limit);
