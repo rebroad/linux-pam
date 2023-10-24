@@ -1,3 +1,9 @@
+pam (1.5.2-8) unstable; urgency=medium
+
+  * Fix FTBFS: s/QUILT_PATCHES_DIR/QUILT_PATCHES/. (Closes: #1054228)
+
+ -- Helmut Grohne <helmut@subdivi.de>  Thu, 19 Oct 2023 16:24:44 +0200
+
 pam (1.5.2-7) unstable; urgency=medium
 
   [ Steve Langasek ]
