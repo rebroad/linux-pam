@@ -21,6 +21,12 @@ dl = $(d)/local
 %:
 	dh $@ --with quilt,autoreconf
 
+# Since this is a 3.0 (quilt) source package, it has a .pc directory pointing
+# to debian/patches after initial unpack.  This misleads quilt and makes
+# dh_quilt_unpatch fail hard.
+execute_before_dh_quilt_unpatch:
+	if test "`cat .pc/.quilt_patches 2>/dev/null`" = debian/patches; then rm -Rf .pc; fi
+
 # avoid libaudit-dev when bootstrapping
 ifneq (,$(filter stage1,$(DEB_BUILD_PROFILES)))
   CONFIGURE_OPTS += --disable-audit
