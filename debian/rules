@@ -13,7 +13,7 @@ DEB_HOST_MULTIARCH	?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
 LC_COLLATE=C
 export LC_COLLATE
 
-export QUILT_PATCHES = debian/patches-applied
+export QUILT_PATCH_DIR = debian/patches-applied
 
 d = $(CURDIR)/debian
 dl = $(d)/local
