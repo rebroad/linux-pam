@@ -25,6 +25,8 @@ ifneq (,$(filter stage1,$(DEB_BUILD_PROFILES)))
   CONFIGURE_OPTS += --disable-audit
 endif  
 
+CONFIGURE_OPTS += --enable-logind
+
 override_dh_auto_configure:
 	dh_auto_configure -- --enable-static --enable-shared \
 		--libdir=/lib/$(DEB_HOST_MULTIARCH) \
