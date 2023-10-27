@@ -735,7 +735,7 @@ sub parse_pam_profile
 		}
 	}
 	close(PROFILE);
-	if (!defined($profile{'Session-Interactive-Only'})) {
+	if (!defined($profile{'Session-Interactive-Only'}) or $profile{'Session-Interactive-Only'} ne 'yes') {
 			$profile{'Session-noninteractive-Type'} = $profile{'Session-Type'};
 			$profile{'Session-noninteractive'} = $profile{'Session'};
 			$profile{'Session-noninteractive-Initial'} = $profile{'Session-Initial'};
