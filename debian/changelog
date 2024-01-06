@@ -1,3 +1,14 @@
+pam (1.5.2-9.2) UNRELEASED; urgency=medium
+
+  * Non-maintainer upload.
+  * Install into /usr/{lib,sbin} instead of /{lib,sbin}. Assumes
+    usrmerge aliasing symlinks are in place since bookworm to keep
+    compatibility with PAM modules still installing into /lib.
+    (DEP17 M2) (Closes: #1060160).
+  * Update lintian override for setgid binary.
+
+ -- Chris Hofstaedtler <zeha@debian.org>  Sat, 06 Jan 2024 12:57:21 +0100
+
 pam (1.5.2-9.1) unstable; urgency=medium
 
   * Non-maintainer upload acked by Sam Hartman.
