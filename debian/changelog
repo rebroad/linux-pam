@@ -15,7 +15,28 @@ pam (1.5.3-1) UNRELEASED; urgency=medium
   * Drop unnecessary dependency on dh-autoreconf.
   * Update standards version to 4.6.2, no changes needed.
 
- -- Sam Hartman <hartmans@debian.org>  Wed, 13 Sep 2023 13:26:06 -0600
+  [ Andreas Henriksson ]
+  * debian/rules: use --enable-usergroups configure flag (Closes: #583958)
+  * Use pam_umask.so in common-session{-noninteractive} (Closes: #711104)
+
+  [ Debian Janitor ]
+  * Apply multi-arch hints. + libpam-doc: Add Multi-Arch: foreign.
+
+  [ Sam Hartman ]
+  * Drop NIS patches and rearrange other patches.
+  * Update patch to move pam manpage to section 7: docbook tools now take
+    the man page output name from the xml so we need to update the
+    Makefile. 
+  * Now PAM.7 is actually installed as pam.7 so update packaging
+  * pam-auth-update: Session-Interactive-Only set to anything other than
+    yes counts as undefined/no, thanks Lucas Nussbaum, Closes: #982309
+  * Use logind instead of utmp in pam_issue and pam_timestamp; utmp is not
+    y2038-safe.
+
+  [ Sam Hartman ]
+  * Add new common-session-* templates to pam-auth-update.
+
+ -- Sam Hartman <hartmans@debian.org>  Mon, 15 Jan 2024 15:45:50 -0700
 
 pam (1.5.2-9.1) unstable; urgency=medium
 
