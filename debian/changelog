@@ -17,6 +17,26 @@ pam (1.5.3-1) UNRELEASED; urgency=medium
 
  -- Sam Hartman <hartmans@debian.org>  Wed, 13 Sep 2023 13:26:06 -0600
 
+pam (1.5.2-9.1) unstable; urgency=medium
+
+  * Non-maintainer upload acked by Sam Hartman.
+  * Really fix quilt-related FTBFS: (Closes: #1054505)
+    pam is a 3.0 (quilt) source package and has a .pc directory after unpack
+    despite having no debian/patches. Even when setting QUILT_PATCH_DIR or
+    QUILT_PATCHES, quilt is now mislead to using the non-existent
+    debian/patches and this makes dh_quilt_unpatch fail, so we delete that
+    directory unless it corresponds to the real debian/patches-applied that we
+    want to be used.
+
+ -- Helmut Grohne <helmut@subdivi.de>  Tue, 24 Oct 2023 19:38:53 +0200
+
+pam (1.5.2-9) unstable; urgency=low
+
+  * Revert 1.5.2-8 upload; as far as I can tell the change is incorrect,
+    Closes: #1054493
+  
+ -- Sam Hartman <hartmans@debian.org>  Tue, 24 Oct 2023 09:19:43 -0600
+
 pam (1.5.2-7) unstable; urgency=medium
 
   [ Steve Langasek ]
