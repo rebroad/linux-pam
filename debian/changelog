@@ -1,7 +1,19 @@
 pam (1.5.3-1) UNRELEASED; urgency=medium
 
+  [ Sam Hartman ]
   * New upstream version
-  * Since we no longer build with NIS support, drop Debian patches related to NIS
+  * Since we no longer build with NIS support, drop Debian patches related
+    to NIS
+  [ Debian Janitor]
+  * Update lintian override info to new format:
+    + debian/libpam-runtime.lintian-overrides: line 5, 7, 9-13
+    + debian/libpam-modules.lintian-overrides: line 5-10, 14
+  * Trim trailing whitespace.
+  * Move source package lintian overrides to debian/source.
+  * Update renamed lintian tag names in lintian overrides.
+  * Set upstream metadata fields: Bug-Database, Bug-Submit, Repository-Browse.
+  * Drop unnecessary dependency on dh-autoreconf.
+  * Update standards version to 4.6.2, no changes needed.
 
  -- Sam Hartman <hartmans@debian.org>  Wed, 13 Sep 2023 13:26:06 -0600
 
@@ -264,7 +276,7 @@ pam (1.4.0-2) unstable; urgency=medium
   * Restart services on upgrade to 1.4.0.  Closes: #978555.
 
  -- Steve Langasek <steve.langasek@ubuntu.com>  Mon, 28 Dec 2020 19:20:38 -0800
-    
+
 pam (1.4.0-1) unstable; urgency=medium
 
   * New upstream release.  Closes: #948188.
