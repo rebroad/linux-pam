@@ -1,4 +1,4 @@
-pam (1.5.3-1) UNRELEASED; urgency=medium
+pam (1.5.3-1) experimental; urgency=medium
 
   [ Sam Hartman ]
   * New upstream version
@@ -36,6 +36,13 @@ pam (1.5.3-1) UNRELEASED; urgency=medium
   [ Sam Hartman ]
   * Add new common-session-* templates to pam-auth-update.
 
+  [ Chris Hofstaedtler ]
+  * Install into /usr/{lib,sbin} instead of /{lib,sbin}. Assumes
+    usrmerge aliasing symlinks are in place since bookworm to keep
+    compatibility with PAM modules still installing into /lib.
+    (DEP17 M2) (Closes: #1060160).
+  * Update lintian override for setgid binary.
+  
  -- Sam Hartman <hartmans@debian.org>  Mon, 15 Jan 2024 15:45:50 -0700
 
 pam (1.5.2-9.1) unstable; urgency=medium
