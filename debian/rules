@@ -33,6 +33,7 @@ override_dh_auto_configure:
 		--enable-isadir=/lib/security \
 		--with-systemdunitdir=/usr/lib/systemd/system \
 		--disable-nis \
+		--enable-usergroups \
 		$(CONFIGURE_OPTS)
 
 # .install files don't have "except for" handling, so we need to exclude
