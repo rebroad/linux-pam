@@ -1,6 +1,8 @@
-pam (1.5.3-2) UNRELEASED; urgency=medium
+pam (1.5.3-2) experimental; urgency=medium
 
   * New Swedish Translations, Thanks Martin Bagge / brother, Closes: #1057775
+  * pam_namespace: protect_dir(): use O_DIRECTORY to prevent local DoS
+    situations (CVE-2024-22365) (Closes: #1061097)
 
  -- Sam Hartman <hartmans@debian.org>  Fri, 02 Feb 2024 11:27:45 -0700
 
