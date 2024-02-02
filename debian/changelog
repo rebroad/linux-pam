@@ -1,5 +1,6 @@
 pam (1.5.3-2) experimental; urgency=medium
 
+  * Rename libpam0g to libpamt64 for time_t transition
   * New Swedish Translations, Thanks Martin Bagge / brother, Closes: #1057775
   * pam_namespace: protect_dir(): use O_DIRECTORY to prevent local DoS
     situations (CVE-2024-22365) (Closes: #1061097)
