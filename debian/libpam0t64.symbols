@@ -1,4 +1,4 @@
-libpam.so.0 libpam0g #MINVER#
+libpam.so.0 libpam0t64 #MINVER#
  *@LIBPAM_1.0 0.99.7.1
  *@LIBPAM_1.4 1.4.0
  *@LIBPAM_EXTENSION_1.0 0.99.7.1
