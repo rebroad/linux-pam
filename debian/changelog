@@ -1,3 +1,10 @@
+pam (1.5.3-3) experimental; urgency=medium
+
+  [ Helmut Grohne ]
+  * Mitigate /usr-move file loss. (Closes: #1062802)
+
+ -- Helmut Grohne <helmut@subdivi.de>  Sat, 03 Feb 2024 12:18:52 +0100
+
 pam (1.5.3-2) experimental; urgency=medium
 
   * Rename libpam0g to libpamt64 for time_t transition

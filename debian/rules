@@ -76,3 +76,8 @@ endif
 
 override_dh_installchangelogs:
 	dh_installchangelogs NEWS
+
+debian/%:debian/%.in
+	sed -e 's/#DEB_HOST_MULTIARCH#/$(DEB_HOST_MULTIARCH)/g' $< > $@
+
+execute_before_dh_installdeb:debian/libpam0t64.preinst debian/libpam0t64.postrm
