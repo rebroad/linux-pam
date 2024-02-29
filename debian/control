@@ -15,7 +15,8 @@ Rules-Requires-Root: binary-targets
 Package: libpam0g
 Architecture: any
 Multi-Arch: same
-Replaces: libpam0g-util
+Replaces: libpam0g-util, libpam0t64 (<< 1.5.3-5)
+Breaks: libpam0t64 (<< 1.5.3-5)
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Pre-Depends: ${misc:Pre-Depends}
 Suggests: libpam-doc
