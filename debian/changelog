@@ -1,3 +1,10 @@
+pam (1.5.3-6) unstable; urgency=medium
+
+  [ Dan Bungert ]
+  * Fix FTBFS when built with -Werror=implicit-function-declaration
+
+ -- Steve Langasek <steve.langasek@ubuntu.com>  Thu, 29 Feb 2024 12:56:32 -0800
+
 pam (1.5.3-5) unstable; urgency=medium
 
   * Revert renaming libpam0g to libpam0t64 for time_t transition: apt

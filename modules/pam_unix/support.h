@@ -6,6 +6,7 @@
 #define _PAM_UNIX_SUPPORT_H
 
 #include <pwd.h>
+#include "libpam/include/pam_inline.h"
 
 /*
  * File to read value of ENCRYPT_METHOD from.
