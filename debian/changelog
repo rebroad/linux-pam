@@ -1,3 +1,20 @@
+pam (1.5.3-5) unstable; urgency=medium
+
+  * Revert renaming libpam0g to libpam0t64 for time_t transition: apt
+    sometimes removes libpam0g rather than simply letting libpam0t64
+    replace libpam0g (and deconfiguring libpam0g), leaving a system where
+    essential packages are broken,  Closes: #1065017
+    * Since libpam0t64 is going away, we do not need dpkg-diversions for it.
+    * As a consequence libpam_misc has an ABI break without a package name
+    change.  We believe nothing in the archive depends on this ABI, and at
+    least until we come up with a better solution this is the least bad option.
+  * For now remove libdb-dev so that libdb-dev can undergo time_t
+    transition.  That means this version of pam does not include
+    pam_userdb, which makes pam unsuitable for release. 
+  * Replace/break libpam0t64
+
+ -- Sam Hartman <hartmans@debian.org>  Thu, 29 Feb 2024 09:46:54 -0700
+
 pam (1.5.3-4) unstable; urgency=medium
 
   * Upload to unstable
