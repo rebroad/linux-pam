@@ -4,7 +4,7 @@ Priority: optional
 Maintainer: Sam Hartman <hartmans@debian.org>
 Uploaders: Steve Langasek <vorlon@debian.org>
 Standards-Version: 4.6.2
-Build-Depends: debhelper-compat (= 13), dh-exec,  flex,  libcrypt-dev, libselinux1-dev [linux-any], libsystemd-dev [linux-any] <!stage1>, po-debconf, autopoint, libaudit-dev [linux-any] <!stage1>, pkg-config, libfl-dev, libfl-dev:native, docbook-xsl-ns, docbook5-xml, xsltproc, libxml2-utils, w3m
+Build-Depends: debhelper-compat (= 13), dh-exec,  flex,  libcrypt-dev, libdb-dev, libselinux1-dev [linux-any], libsystemd-dev [linux-any] <!stage1>, po-debconf, autopoint, libaudit-dev [linux-any] <!stage1>, pkg-config, libfl-dev, libfl-dev:native, docbook-xsl-ns, docbook5-xml, xsltproc, libxml2-utils, w3m
 Build-Conflicts-Indep: fop
 Build-Conflicts: libdb4.2-dev, libxcrypt-dev
 Vcs-Browser: https://salsa.debian.org/vorlon/pam
