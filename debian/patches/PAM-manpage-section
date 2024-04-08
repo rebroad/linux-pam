@@ -689,7 +689,7 @@ index ba6d955..1cb7566 100644
      </para>
    </refsect1>
 diff --git a/doc/man/pam_get_item.3 b/doc/man/pam_get_item.3
-index d08fde5..894c7f6 100644
+index d08fde5..30434bb 100644
 --- a/doc/man/pam_get_item.3
 +++ b/doc/man/pam_get_item.3
 @@ -2,12 +2,12 @@
@@ -697,13 +697,13 @@ index d08fde5..894c7f6 100644
  .\"    Author: [FIXME: author] [see http://www.docbook.org/tdg5/en/html/author]
  .\" Generator: DocBook XSL Stylesheets v1.79.2 <http://docbook.sf.net/>
 -.\"      Date: 05/07/2023
-+.\"      Date: 09/15/2023
++.\"      Date: 02/29/2024
  .\"    Manual: Linux-PAM Manual
  .\"    Source: Linux-PAM
  .\"  Language: English
  .\"
 -.TH "PAM_GET_ITEM" "3" "05/07/2023" "Linux\-PAM" "Linux\-PAM Manual"
-+.TH "PAM_GET_ITEM" "3" "09/15/2023" "Linux\-PAM" "Linux\-PAM Manual"
++.TH "PAM_GET_ITEM" "3" "02/29/2024" "Linux\-PAM" "Linux\-PAM Manual"
  .\" -----------------------------------------------------------------
  .\" * Define some portability stuff
  .\" -----------------------------------------------------------------
