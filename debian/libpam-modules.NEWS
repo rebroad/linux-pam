@@ -6,7 +6,8 @@ pam (1.5.3-7) unstable; urgency=medium
     called pat), then files will be group writable by default. To disable
     this use a group name that differs from the user name or add
     nousergroups to the pam_umask line in
-    /etc/pam.d/common-session:
+    /etc/pam.d/common-session and
+    /etc/pam.d/common-session-noninteractive:
 
     session optional			pam_umask.so nousergroups
 
