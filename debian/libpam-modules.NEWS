@@ -4,7 +4,7 @@ pam (1.5.3-7) unstable; urgency=medium
     umask of users logging in.  If the primary group name of a user
     matches their primary user name (user pat's default group is also
     called pat), then files will be group writable by default. To disable
-    this user a group name that differs from the user name or add
+    this use a group name that differs from the user name or add
     nousergroups to the pam_umask line in
     /etc/pam.d/common-session:
 
