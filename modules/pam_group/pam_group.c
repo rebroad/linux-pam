@@ -24,9 +24,9 @@
 #include <fcntl.h>
 #include <netdb.h>
 
-#define PAM_GROUP_CONF		SCONFIGDIR "/group.conf"
-#ifdef VENDOR_SCONFIGDIR
-# define VENDOR_PAM_GROUP_CONF	VENDOR_SCONFIGDIR "/group.conf"
+#define PAM_GROUP_CONF		SCONFIG_DIR "/group.conf"
+#ifdef VENDOR_SCONFIG_DIR
+# define VENDOR_PAM_GROUP_CONF	VENDOR_SCONFIG_DIR "/group.conf"
 #endif
 #define PAM_GROUP_BUFLEN        1000
 #define FIELD_SEPARATOR         ';'   /* this is new as of .02 */
@@ -87,7 +87,7 @@ read_field(const pam_handle_t *pamh, int fd, char **buf, int *from, int *state,
 
     /* is buf set ? */
     if (! *buf) {
-	*buf = (char *) calloc(1, PAM_GROUP_BUFLEN+1);
+	*buf = calloc(1, PAM_GROUP_BUFLEN+1);
 	if (! *buf) {
 	    pam_syslog(pamh, LOG_CRIT, "out of memory");
 	    D(("no memory"));
@@ -232,7 +232,7 @@ static int logic_member(const char *string, int *at)
 	       break;
 
 	  default:
-	       if (isalpha(c) || c == '*' || isdigit(c) || c == '_'
+	       if (isalpha((unsigned char)c) || c == '*' || isdigit((unsigned char)c) || c == '_'
 		    || c == '-' || c == '.' || c == '/' || c == ':') {
 		    token = 1;
 	       } else if (token) {
@@ -266,7 +266,7 @@ logic_field (const pam_handle_t *pamh, const void *me,
 	  if (next == VAL) {
 	       if (c == '!')
 		    not = !not;
-	       else if (isalpha(c) || c == '*' || isdigit(c) || c == '_'
+	       else if (isalpha((unsigned char)c) || c == '*' || isdigit((unsigned char)c) || c == '_'
                     || c == '-' || c == '.' || c == '/' || c == ':') {
 		    right = not ^ agrees(pamh, me, x+at, l, rule);
 		    if (oper == AND)
@@ -394,13 +394,13 @@ check_time (const pam_handle_t *pamh, const void *AT,
 	  not = FALSE;
      }
 
-     for (marked_day = 0; len > 0 && isalpha(times[j]); --len) {
+     for (marked_day = 0; len > 0 && isalpha((unsigned char)times[j]); --len) {
 	  int this_day=-1;
 
 	  D(("%c%c ?", times[j], times[j+1]));
 	  for (i=0; days[i].d != NULL; ++i) {
-	       if (tolower(times[j]) == days[i].d[0]
-		   && tolower(times[j+1]) == days[i].d[1] ) {
+	       if (tolower((unsigned char)times[j]) == days[i].d[0]
+		   && tolower((unsigned char)times[j+1]) == days[i].d[1] ) {
 		    this_day = days[i].bit;
 		    break;
 	       }
@@ -419,7 +419,7 @@ check_time (const pam_handle_t *pamh, const void *AT,
      D(("day range = 0%o", marked_day));
 
      time_start = 0;
-     for (i=0; len > 0 && i < 4 && isdigit(times[i+j]); ++i, --len) {
+     for (i=0; len > 0 && i < 4 && isdigit((unsigned char)times[i+j]); ++i, --len) {
 	  time_start *= 10;
 	  time_start += times[i+j]-'0';       /* is this portable? */
      }
@@ -427,7 +427,7 @@ check_time (const pam_handle_t *pamh, const void *AT,
 
      if (times[j] == '-') {
 	  time_end = 0;
-	  for (i=1; len > 0 && i < 5 && isdigit(times[i+j]); ++i, --len) {
+	  for (i=1; len > 0 && i < 5 && isdigit((unsigned char)times[i+j]); ++i, --len) {
 	       time_end *= 10;
 	       time_end += times[i+j]-'0';    /* is this portable? */
 	  }
@@ -497,7 +497,7 @@ static int find_member(const char *string, int *at)
                break;
 
           default:
-               if (isalpha(c) || isdigit(c) || c == '_' || c == '*'
+               if (isalpha((unsigned char)c) || isdigit((unsigned char)c) || c == '_' || c == '*'
                     || c == '-') {
                     token = 1;
                } else if (token) {
@@ -513,7 +513,7 @@ static int find_member(const char *string, int *at)
 }
 
 #define GROUP_BLK 10
-#define blk_size(len) (((len-1 + GROUP_BLK)/GROUP_BLK)*GROUP_BLK)
+#define blk_size(len) ((((len)-1 + GROUP_BLK)/GROUP_BLK)*GROUP_BLK)
 
 static int mkgrplist(pam_handle_t *pamh, char *buf, gid_t **list, int len)
 {
@@ -530,8 +530,7 @@ static int mkgrplist(pam_handle_t *pamh, char *buf, gid_t **list, int len)
 	       gid_t *tmp;
 
 	       D(("allocating new block"));
-	       tmp = (gid_t *) realloc((*list)
-				       , sizeof(gid_t) * (blks += GROUP_BLK));
+	       tmp = realloc((*list), sizeof(gid_t) * (blks += GROUP_BLK));
 	       if (tmp != NULL) {
 		    (*list) = tmp;
 	       } else {
@@ -822,7 +821,7 @@ pam_sm_setcred (pam_handle_t *pamh, int flags,
 
     /* good, now we have the service name, the user and the terminal name */
 
-    D(("service=%s", service));
+    D(("service=%s", (const char *) service));
     D(("user=%s", user));
     D(("tty=%s", tty));
 

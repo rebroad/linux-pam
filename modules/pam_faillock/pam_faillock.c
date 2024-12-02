@@ -54,6 +54,7 @@
 #include <security/pam_ext.h>
 
 #include "pam_inline.h"
+#include "pam_i18n.h"
 #include "faillock.h"
 #include "faillock_config.h"
 
@@ -106,21 +107,25 @@ args_parse(pam_handle_t *pamh, int argc, const char **argv,
 			opts->action = FAILLOCK_ACTION_AUTHSUCC;
 		}
 		else {
-			char buf[FAILLOCK_CONF_MAX_LINELEN + 1];
-			char *val;
+			char *name, *val;
 
-			strncpy(buf, argv[i], sizeof(buf) - 1);
-			buf[sizeof(buf) - 1] = '\0';
+			if ((name = strdup(argv[i])) == NULL) {
+				pam_syslog(pamh, LOG_CRIT,
+				    "Error allocating memory: %m");
+				return PAM_BUF_ERR;
+			}
 
-			val = strchr(buf, '=');
+			val = strchr(name, '=');
 			if (val != NULL) {
 				*val = '\0';
 				++val;
 			}
 			else {
-				val = buf + sizeof(buf) - 1;
+				val = name + strlen(name);
 			}
-			set_conf_opt(pamh, opts, buf, val);
+			set_conf_opt(pamh, opts, name, val);
+
+			free(name);
 		}
 	}
 
@@ -248,9 +253,12 @@ check_tally(pam_handle_t *pamh, struct options *opts, struct tally_data *tallies
 
 				(void)pam_get_item(pamh, PAM_TTY, &tty);
 				(void)pam_get_item(pamh, PAM_RHOST, &rhost);
-				snprintf(buf, sizeof(buf), "pam_faillock uid=%u ", opts->uid);
-				audit_log_user_message(audit_fd, AUDIT_RESP_ACCT_UNLOCK_TIMED, buf,
-					rhost, NULL, tty, 1);
+				snprintf(buf, sizeof(buf), "op=pam_faillock suid=%u ", opts->uid);
+				if (audit_log_user_message(audit_fd, AUDIT_RESP_ACCT_UNLOCK_TIMED, buf,
+							   rhost, NULL, tty, 1) <= 0)
+					pam_syslog(pamh, LOG_ERR,
+						   "Error sending audit message: %m");
+				audit_close(audit_fd);
 			}
 #endif
 			opts->flags |= FAILLOCK_FLAG_UNLOCKED;
@@ -364,13 +372,17 @@ write_tally(pam_handle_t *pamh, struct options *opts, struct tally_data *tallies
 			errno == EAFNOSUPPORT))
 			return PAM_SYSTEM_ERR;
 
-		snprintf(buf, sizeof(buf), "pam_faillock uid=%u ", opts->uid);
-		audit_log_user_message(audit_fd, AUDIT_ANOM_LOGIN_FAILURES, buf,
-			NULL, NULL, NULL, 1);
+		snprintf(buf, sizeof(buf), "op=pam_faillock suid=%u ", opts->uid);
+		if (audit_log_user_message(audit_fd, AUDIT_ANOM_LOGIN_FAILURES, buf,
+					   NULL, NULL, NULL, 1) <= 0)
+			pam_syslog(pamh, LOG_ERR,
+				   "Error sending audit message: %m");
 
 		if (!opts->is_admin || (opts->flags & FAILLOCK_FLAG_DENY_ROOT)) {
-			audit_log_user_message(audit_fd, AUDIT_RESP_ACCT_LOCK, buf,
-				NULL, NULL, NULL, 1);
+			if (audit_log_user_message(audit_fd, AUDIT_RESP_ACCT_LOCK, buf,
+						   NULL, NULL, NULL, 1) <= 0)
+				pam_syslog(pamh, LOG_ERR,
+					   "Error sending audit message: %m");
 		}
 		close(audit_fd);
 #endif

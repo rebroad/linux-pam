@@ -6,21 +6,13 @@
  * template for this file (via pam_mail)
  */
 
-#define DEFAULT_ETC_ENVFILE     "/etc/environment"
-#ifdef VENDORDIR
-#define VENDOR_DEFAULT_ETC_ENVFILE (VENDORDIR "/environment")
-#endif
-#define DEFAULT_READ_ENVFILE    1
-
-#define DEFAULT_USER_ENVFILE    ".pam_environment"
-#define DEFAULT_USER_READ_ENVFILE 0
-
 #include "config.h"
 
 #include <ctype.h>
 #include <errno.h>
 #include <pwd.h>
 #include <stdarg.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -29,7 +21,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #ifdef USE_ECONF
-#include <libeconf.h>
+#include "pam_econf.h"
 #endif
 
 #include <security/pam_modules.h>
@@ -37,6 +29,10 @@
 #include <security/_pam_macros.h>
 #include <security/pam_ext.h>
 #include "pam_inline.h"
+
+#ifndef USE_ECONF
+#include "pam_line.h"
+#endif
 
 /* This little structure makes it easier to keep variables together */
 
@@ -47,13 +43,19 @@ typedef struct var {
   char *override;
 } VAR;
 
-#define DEFAULT_CONF_FILE	(SCONFIGDIR "/pam_env.conf")
-#ifdef VENDOR_SCONFIGDIR
-#define VENDOR_DEFAULT_CONF_FILE (VENDOR_SCONFIGDIR "/pam_env.conf")
+#define DEFAULT_ETC_ENVFILE     "/etc/environment"
+#ifdef VENDORDIR
+#define VENDOR_DEFAULT_ETC_ENVFILE (VENDORDIR "/environment")
 #endif
+#define DEFAULT_READ_ENVFILE    1
 
-#define BUF_SIZE 8192
-#define MAX_ENV  8192
+#define DEFAULT_USER_ENVFILE    ".pam_environment"
+#define DEFAULT_USER_READ_ENVFILE 0
+
+#define DEFAULT_CONF_FILE	(SCONFIG_DIR "/pam_env.conf")
+#ifdef VENDOR_SCONFIG_DIR
+#define VENDOR_DEFAULT_CONF_FILE (VENDOR_SCONFIG_DIR "/pam_env.conf")
+#endif
 
 #define GOOD_LINE    0
 #define BAD_LINE     100       /* This must be > the largest PAM_* error code */
@@ -61,6 +63,12 @@ typedef struct var {
 #define DEFINE_VAR   101
 #define UNDEFINE_VAR 102
 #define ILLEGAL_VAR  103
+
+struct string_buffer {
+  char *str;
+  size_t len;
+  size_t size;
+};
 
 /* This is a special value used to designate an empty string */
 static char quote='\0';
@@ -152,6 +160,28 @@ isDirectory(const char *path) {
    return S_ISDIR(statbuf.st_mode);
 }
 
+/*
+ * Remove escaped newline from string.
+ *
+ * All occurrences of "\\n" will be removed from string.
+ */
+static void
+econf_unescnl(char *val)
+{
+    char *dest, *p;
+
+    dest = p = val;
+
+    while (*p != '\0') {
+      if (p[0] == '\\' && p[1] == '\n') {
+	p += 2;
+      } else {
+	*dest++ = *p++;
+      }
+    }
+    *dest = '\0';
+}
+
 static int
 econf_read_file(const pam_handle_t *pamh, const char *filename, const char *delim,
 			   const char *name, const char *suffix, const char *subpath,
@@ -211,9 +241,8 @@ econf_read_file(const pam_handle_t *pamh, const char *filename, const char *deli
 	}
       }
 
-      D(("Read configuration from directory %s and %s", vendor_dir, sysconf_dir));
-      error = econf_readDirs (&key_file, vendor_dir, sysconf_dir, name, suffix,
-			      delim, "#");
+      error = pam_econf_readconfig (&key_file, vendor_dir, sysconf_dir, name, suffix,
+				    delim, "#", NULL, NULL);
       free(vendor_dir);
       free(sysconf_dir);
       if (error != ECONF_SUCCESS) {
@@ -243,7 +272,7 @@ econf_read_file(const pam_handle_t *pamh, const char *filename, const char *deli
       return PAM_ABORT;
     }
 
-    *lines = malloc((key_number +1)* sizeof(char**));
+    *lines = calloc((key_number + 1), sizeof(char**));
     if (*lines == NULL) {
       pam_syslog(pamh, LOG_ERR, "Cannot allocate memory.");
       econf_free(keys);
@@ -251,18 +280,18 @@ econf_read_file(const pam_handle_t *pamh, const char *filename, const char *deli
       return PAM_BUF_ERR;
     }
 
-    (*lines)[key_number] = 0;
-
+    size_t n = 0;
     for (size_t i = 0; i < key_number; i++) {
       char *val;
 
       error = econf_getStringValue (key_file, NULL, keys[i], &val);
-      if (error != ECONF_SUCCESS) {
+      if (error != ECONF_SUCCESS || val == NULL) {
 	pam_syslog(pamh, LOG_ERR, "Unable to get string from key %s: %s",
 		   keys[i],
 		   econf_errString(error));
       } else {
-        if (asprintf(&(*lines)[i],"%s%c%s", keys[i], delim[0], val) < 0) {
+        econf_unescnl(val);
+        if (asprintf(&(*lines)[n],"%s%c%s", keys[i], delim[0], val) < 0) {
 	  pam_syslog(pamh, LOG_ERR, "Cannot allocate memory.");
           econf_free(keys);
           econf_freeFile(key_file);
@@ -272,6 +301,7 @@ econf_read_file(const pam_handle_t *pamh, const char *filename, const char *deli
 	  return PAM_BUF_ERR;
 	}
 	free (val);
+	n++;
       }
     }
 
@@ -282,103 +312,12 @@ econf_read_file(const pam_handle_t *pamh, const char *filename, const char *deli
 
 #else
 
-/*
- * This is where we read a line of the PAM config file. The line may be
- * preceded by lines of comments and also extended with "\\\n"
- */
-static int
-_assemble_line(FILE *f, char *buffer, int buf_len)
-{
-    char *p = buffer;
-    char *s, *os;
-    int used = 0;
-    int whitespace;
-
-    /* loop broken with a 'break' when a non-'\\n' ended line is read */
-
-    D(("called."));
-    for (;;) {
-	if (used >= buf_len) {
-	    /* Overflow */
-	    D(("_assemble_line: overflow"));
-	    return -1;
-	}
-	if (fgets(p, buf_len - used, f) == NULL) {
-	    if (used) {
-		/* Incomplete read */
-		return -1;
-	    } else {
-		/* EOF */
-		return 0;
-	    }
-	}
-	if (p[0] == '\0') {
-	    D(("_assemble_line: corrupted or binary file"));
-	    return -1;
-	}
-	if (p[strlen(p)-1] != '\n' && !feof(f)) {
-	    D(("_assemble_line: line too long"));
-	    return -1;
-	}
-
-	/* skip leading spaces --- line may be blank */
-
-	whitespace = strspn(p, " \n\t");
-	s = p + whitespace;
-	if (*s && (*s != '#')) {
-	    used += whitespace;
-	    os = s;
-
-	    /*
-	     * we are only interested in characters before the first '#'
-	     * character
-	     */
-
-	    while (*s && *s != '#')
-		 ++s;
-	    if (*s == '#') {
-		 *s = '\0';
-		 used += strlen(os);
-		 break;                /* the line has been read */
-	    }
-
-	    s = os;
-
-	    /*
-	     * Check for backslash by scanning back from the end of
-	     * the entered line, the '\n' has been included since
-	     * normally a line is terminated with this
-	     * character. fgets() should only return one though!
-	     */
-
-	    s += strlen(s);
-	    while (s > os && ((*--s == ' ') || (*s == '\t')
-			      || (*s == '\n')));
-
-	    /* check if it ends with a backslash */
-	    if (*s == '\\') {
-		*s = '\0';              /* truncate the line here */
-		used += strlen(os);
-		p = s;                  /* there is more ... */
-	    } else {
-		/* End of the line! */
-		used += strlen(os);
-		break;                  /* this is the complete line */
-	    }
-
-	} else {
-	    /* Nothing in this line */
-	    /* Don't move p         */
-	}
-    }
-
-    return used;
-}
-
 static int read_file(const pam_handle_t *pamh, const char*filename, char ***lines)
 {
     FILE *conf;
-    char buffer[BUF_SIZE];
+    struct pam_line_buffer buffer;
+
+    _pam_line_buffer_init(&buffer);
 
     D(("Parsed file name is: %s", filename));
 
@@ -388,38 +327,39 @@ static int read_file(const pam_handle_t *pamh, const char*filename, char ***line
     }
 
     size_t i = 0;
-    *lines = malloc((i + 1)* sizeof(char**));
+    *lines = malloc((i + 1)* sizeof(char*));
     if (*lines == NULL) {
       pam_syslog(pamh, LOG_ERR, "Cannot allocate memory.");
       (void) fclose(conf);
       return PAM_BUF_ERR;
     }
     (*lines)[i] = 0;
-    while (_assemble_line(conf, buffer, BUF_SIZE) > 0) {
+    while (_pam_line_assemble(conf, &buffer, '\0') > 0) {
+      char *p = buffer.assembled;
       char **tmp = NULL;
-      D(("Read line: %s", buffer));
-      tmp = realloc(*lines, (++i + 1) * sizeof(char**));
+      D(("Read line: %s", p));
+      tmp = realloc(*lines, (++i + 1) * sizeof(char*));
       if (tmp == NULL) {
 	pam_syslog(pamh, LOG_ERR, "Cannot allocate memory.");
 	(void) fclose(conf);
 	free_string_array(*lines);
-	pam_overwrite_array(buffer);
+	_pam_line_buffer_clear(&buffer);
 	return PAM_BUF_ERR;
       }
       *lines = tmp;
-      (*lines)[i-1] = strdup(buffer);
+      (*lines)[i-1] = strdup(p);
       if ((*lines)[i-1] == NULL) {
         pam_syslog(pamh, LOG_ERR, "Cannot allocate memory.");
         (void) fclose(conf);
         free_string_array(*lines);
-        pam_overwrite_array(buffer);
+        _pam_line_buffer_clear(&buffer);
         return PAM_BUF_ERR;
       }
       (*lines)[i] = 0;
     }
 
     (void) fclose(conf);
-    pam_overwrite_array(buffer);
+    _pam_line_buffer_clear(&buffer);
     return PAM_SUCCESS;
 }
 #endif
@@ -443,17 +383,15 @@ _parse_line(const pam_handle_t *pamh, const char *buffer, VAR *var)
 
   length = strcspn(buffer," \t\n");
 
-  if ((var->name = malloc(length + 1)) == NULL) {
-    pam_syslog(pamh, LOG_CRIT, "Couldn't malloc %d bytes", length+1);
-    return PAM_BUF_ERR;
-  }
-
   /*
    * The first thing on the line HAS to be the variable name,
    * it may be the only thing though.
    */
-  strncpy(var->name, buffer, length);
-  var->name[length] = '\0';
+  if ((var->name = strndup(buffer, length)) == NULL) {
+    D(("out of memory"));
+    pam_syslog(pamh, LOG_CRIT, "out of memory");
+    return PAM_BUF_ERR;
+  }
   D(("var->name = <%s>, length = %d", var->name, length));
 
   /*
@@ -464,7 +402,7 @@ _parse_line(const pam_handle_t *pamh, const char *buffer, VAR *var)
   ptr = buffer+length;
   while ((length = strspn(ptr, " \t")) > 0) {
     ptr += length;                              /* remove leading whitespace */
-    D((ptr));
+    D(("%s", ptr));
     if ((tmpptr = pam_str_skip_prefix(ptr, "DEFAULT=")) != NULL) {
       ptr = tmpptr;
       D(("Default arg found: <%s>", ptr));
@@ -498,13 +436,13 @@ _parse_line(const pam_handle_t *pamh, const char *buffer, VAR *var)
       quoteflg++;
     }
     if (length) {
-      if ((*valptr = malloc(length + 1)) == NULL) {
-	D(("Couldn't malloc %d bytes", length+1));
-	pam_syslog(pamh, LOG_CRIT, "Couldn't malloc %d bytes", length+1);
+      if (*valptr != &quote)
+	free(*valptr);
+      if ((*valptr = strndup(ptr, length)) == NULL) {
+	D(("out of memory"));
+	pam_syslog(pamh, LOG_CRIT, "out of memory");
 	return PAM_BUF_ERR;
       }
-      (void)strncpy(*valptr,ptr,length);
-      (*valptr)[length]='\0';
     } else if (quoteflg) {
       quoteflg--;
       *valptr = &quote;      /* a quick hack to handle the empty string */
@@ -570,22 +508,112 @@ _pam_get_item_byname(pam_handle_t *pamh, const char *name)
   return itemval;
 }
 
+static void
+_strbuf_init(struct string_buffer *buffer)
+{
+  buffer->str = NULL;
+  buffer->len = 0;
+  buffer->size = 0;
+}
+
+static void
+_strbuf_free(struct string_buffer *buffer)
+{
+  pam_overwrite_n(buffer->str, buffer->len);
+  _pam_drop(buffer->str);
+  buffer->len = 0;
+  buffer->size = 0;
+}
+
+/*
+ * Allocates given amount of bytes in buffer for addition.
+ * Internally adding an extra byte for NUL character.
+ *
+ * Returns 0 on success, 1 on error.
+ */
+static int
+_strbuf_reserve(struct string_buffer *buffer, size_t add)
+{
+  char *p;
+  size_t s;
+
+  /* Is already enough memory allocated? */
+  if (add < buffer->size - buffer->len) {
+    return 0;
+  }
+
+  /* Can the requested bytes (plus additional NUL byte) fit at all? */
+  if (buffer->len >= SIZE_MAX - add) {
+    return 1;
+  }
+
+  if (buffer->size == 0 && add < 64) {
+    /* Start with 64 bytes if that's enough */
+    s = 64;
+  } else if (buffer->size >= SIZE_MAX / 2 || buffer->size * 2 < add + 1) {
+    /* If doubling is not enough (or not possible), get as much as needed */
+    s = buffer->len + add + 1;
+  } else {
+    /* Ideally, double allocated memory */
+    s = buffer->size * 2;
+  }
+
+  if ((p = realloc(buffer->str, s)) == NULL) {
+    return 1;
+  }
+
+  buffer->str = p;
+  buffer->size = s;
+
+  return 0;
+}
+
+static int
+_strbuf_add_char(struct string_buffer *buffer, char c)
+{
+  D(("Called <%s> + <%c>.", buffer->str == NULL ? "" : buffer->str, c));
+
+  if (_strbuf_reserve(buffer, 1)) {
+    return 1;
+  }
+
+  buffer->str[buffer->len++] = c;
+  buffer->str[buffer->len] = '\0';
+
+  return 0;
+}
+
+static int
+_strbuf_add_string(struct string_buffer *buffer, const char *str)
+{
+  size_t len = strlen(str);
+
+  D(("Called <%s> + <%s>.", buffer->str == NULL ? "" : buffer->str, str));
+
+  if (_strbuf_reserve(buffer, len)) {
+    return 1;
+  }
+
+  strcpy(buffer->str + buffer->len, str);
+  buffer->len += len;
+
+  return 0;
+}
+
 static int
 _expand_arg(pam_handle_t *pamh, char **value)
 {
-  const char *orig=*value, *tmpptr=NULL;
-  char *ptr;       /*
-		    * Sure would be nice to use tmpptr but it needs to be
-		    * a constant so that the compiler will shut up when I
-		    * call pam_getenv and _pam_get_item_byname -- sigh
-		    */
+  const char *orig=*value;
+  struct string_buffer buf;
 
-  /* No unexpanded variable can be bigger than BUF_SIZE */
-  char type, tmpval[BUF_SIZE];
+  /*
+   * Return early if there are no special characters present in the value.
+   */
+  if ((*value)[strcspn(*value, "\\$@")] == '\0') {
+    return PAM_SUCCESS;
+  }
 
-  /* I know this shouldn't be hard-coded but it's so much easier this way */
-  char tmp[MAX_ENV] = {};
-  size_t idx = 0;
+  _strbuf_init(&buf);
 
   /*
    * (possibly non-existent) environment variables can be used as values
@@ -598,19 +626,16 @@ _expand_arg(pam_handle_t *pamh, char **value)
   while (*orig) {     /* while there is some input to deal with */
     if ('\\' == *orig) {
       ++orig;
-      if ('$' != *orig && '@' != *orig) {
+      if ('$' != *orig && '@' != *orig && '\\' != *orig) {
 	D(("Unrecognized escaped character: <%c> - ignoring", *orig));
 	pam_syslog(pamh, LOG_ERR,
 		   "Unrecognized escaped character: <%c> - ignoring",
 		   *orig);
-      } else if (idx + 1 < MAX_ENV) {
-	tmp[idx++] = *orig++;        /* Note the increment */
       } else {
-	/* is it really a good idea to try to log this? */
-	D(("Variable buffer overflow: <%s> + <%s>", tmp, tmpptr));
-	pam_syslog (pamh, LOG_ERR, "Variable buffer overflow: <%s> + <%s>",
-		 tmp, tmpptr);
-	goto buf_err;
+	/* Note the increment */
+	if (_strbuf_add_char(&buf, *orig++)) {
+	  goto buf_err;
+	}
       }
       continue;
     }
@@ -620,11 +645,20 @@ _expand_arg(pam_handle_t *pamh, char **value)
 	   " <%s> - ignoring", orig));
 	pam_syslog(pamh, LOG_ERR, "Expandable variables must be wrapped in {}"
 		 " <%s> - ignoring", orig);
-	if (idx + 1 < MAX_ENV) {
-	  tmp[idx++] = *orig++;        /* Note the increment */
+	/* Note the increment */
+	if (_strbuf_add_char(&buf, *orig++)) {
+	  goto buf_err;
 	}
 	continue;
       } else {
+	const char *tmpptr=NULL, *tmpval;
+	char *ptr;       /*
+			  * Sure would be nice to use tmpptr but it needs to be
+			  * a constant so that the compiler will shut up when I
+			  * call pam_getenv and _pam_get_item_byname -- sigh
+			  */
+	char type;
+
 	D(("Expandable argument: <%s>", orig));
 	type = *orig;
 	orig+=2;     /* skip the ${ or @{ characters */
@@ -637,8 +671,7 @@ _expand_arg(pam_handle_t *pamh, char **value)
 		     "Unterminated expandable variable: <%s>", orig-2);
 	  goto abort_err;
 	}
-	strncpy(tmpval, orig, sizeof(tmpval));
-	tmpval[sizeof(tmpval)-1] = '\0';
+	tmpval = orig;
 	orig=ptr;
 	/*
 	 * so, we know we need to expand tmpval, it is either
@@ -665,54 +698,37 @@ _expand_arg(pam_handle_t *pamh, char **value)
 	}         /* switch */
 
 	if (tmpptr) {
-	  size_t len = strlen(tmpptr);
-	  if (idx + len < MAX_ENV) {
-	    strcpy(tmp + idx, tmpptr);
-	    idx += len;
-	  } else {
-	    /* is it really a good idea to try to log this? */
-	    D(("Variable buffer overflow: <%s> + <%s>", tmp, tmpptr));
-	    pam_syslog (pamh, LOG_ERR,
-			"Variable buffer overflow: <%s> + <%s>", tmp, tmpptr);
+	  if (_strbuf_add_string(&buf, tmpptr)) {
 	    goto buf_err;
 	  }
 	}
       }           /* if ('{' != *orig++) */
     } else {      /* if ( '$' == *orig || '@' == *orig) */
-      if (idx + 1 < MAX_ENV) {
-	tmp[idx++] = *orig++;        /* Note the increment */
-      } else {
-	/* is it really a good idea to try to log this? */
-	D(("Variable buffer overflow: <%s> + <%s>", tmp, tmpptr));
-	pam_syslog(pamh, LOG_ERR,
-		   "Variable buffer overflow: <%s> + <%s>", tmp, tmpptr);
+      /* Note the increment */
+      if (_strbuf_add_char(&buf, *orig++)) {
 	goto buf_err;
       }
     }
   }              /* for (;*orig;) */
 
-  if (idx > strlen(*value)) {
+  if (buf.len > strlen(*value)) {
     free(*value);
-    if ((*value = malloc(idx + 1)) == NULL) {
-      D(("Couldn't malloc %d bytes for expanded var", idx + 1));
-      pam_syslog (pamh, LOG_CRIT, "Couldn't malloc %lu bytes for expanded var",
-	       (unsigned long)idx+1);
+    if ((*value = strdup(buf.str)) == NULL) {
       goto buf_err;
     }
+  } else {
+    const char *tmpptr = buf.str == NULL ? "" : buf.str;
+    strcpy(*value, tmpptr);
   }
-  strcpy(*value, tmp);
-  pam_overwrite_array(tmp);
-  pam_overwrite_array(tmpval);
+  _strbuf_free(&buf);
   D(("Exit."));
 
   return PAM_SUCCESS;
 buf_err:
-  pam_overwrite_array(tmp);
-  pam_overwrite_array(tmpval);
+  _strbuf_free(&buf);
   return PAM_BUF_ERR;
 abort_err:
-  pam_overwrite_array(tmp);
-  pam_overwrite_array(tmpval);
+  _strbuf_free(&buf);
   return PAM_ABORT;
 }
 
@@ -755,7 +771,7 @@ _check_var(pam_handle_t *pamh, VAR *var)
     return retval;
   }
 
-  /* Now its easy */
+  /* Now it's easy */
 
   if (var->override && *(var->override)) {
     /* if there is a non-empty string in var->override, we use it */
@@ -804,7 +820,6 @@ _clean_var(VAR *var)
     var->value = NULL;    /* never has memory specific to it */
     var->defval = NULL;
     var->override = NULL;
-    return;
 }
 
 static int
@@ -856,20 +871,20 @@ _parse_config_file(pam_handle_t *pamh, int ctrl, const char *file)
 #ifdef USE_ECONF
     /* If "file" is not NULL, only this file will be parsed. */
     retval = econf_read_file(pamh, file, " \t", PAM_ENV, ".conf", "security", &conf_list);
-#else
+#else /* !USE_ECONF */
     /* Only one file will be parsed. So, file has to be set. */
-    if (file == NULL) /* No filename has been set via argv. */
+    if (file == NULL) { /* No filename has been set via argv. */
       file = DEFAULT_CONF_FILE;
-#ifdef VENDOR_DEFAULT_CONF_FILE
-    /*
-    * Check whether file is available.
-    * If it does not exist, fall back to VENDOR_DEFAULT_CONF_FILE file.
-    */
-    struct stat stat_buffer;
-    if (stat(file, &stat_buffer) != 0 && errno == ENOENT) {
-      file = VENDOR_DEFAULT_CONF_FILE;
+# ifdef VENDOR_DEFAULT_CONF_FILE
+      /*
+       * Check whether DEFAULT_CONF_FILE file is available.
+       * If it does not exist, fall back to VENDOR_DEFAULT_CONF_FILE file.
+       */
+      struct stat stat_buffer;
+      if (stat(file, &stat_buffer) != 0 && errno == ENOENT)
+        file = VENDOR_DEFAULT_CONF_FILE;
+# endif
     }
-#endif
     retval = read_file(pamh, file, &conf_list);
 #endif
 
@@ -965,7 +980,7 @@ _parse_env_file(pam_handle_t *pamh, int ctrl, const char *file)
 	}
 
 	for ( i = 0 ; key[i] != '=' && key[i] != '\0' ; i++ )
-	    if (!isalnum(key[i]) && key[i] != '_') {
+	    if (!isalnum((unsigned char)key[i]) && key[i] != '_') {
 		pam_syslog(pamh, LOG_ERR,
 		           "non-alphanumeric key '%s' in %s', ignoring",
 		           key, file);

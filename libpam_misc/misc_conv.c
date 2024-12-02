@@ -17,7 +17,9 @@
 
 #include <security/pam_appl.h>
 #include <security/pam_misc.h>
+
 #include "pam_inline.h"
+#include "pam_i18n.h"
 
 #define INPUTSIZE PAM_MISC_CONV_BUFSIZE      /* maximum length of input+1 */
 #define CONV_ECHO_ON  1                            /* types of echo state */
@@ -56,7 +58,7 @@ void (*pam_binary_handler_free)(void *appdata, pamc_bp_t *prompt_p)
 
 /* the following code is used to get text input */
 
-static volatile int expired=0;
+static volatile sig_atomic_t expired=0;
 
 /* return to the previous signal handling */
 static void reset_alarm(struct sigaction *o_ptr)
@@ -97,7 +99,7 @@ static int get_delay(void)
     expired = 0;                                        /* reset flag */
     (void) time(&now);
 
-    /* has the quit time past? */
+    /* has the quit time passed? */
     if (pam_misc_conv_die_time && now >= pam_misc_conv_die_time) {
 	fprintf(stderr,"%s",pam_misc_conv_die_line);
 
@@ -105,7 +107,7 @@ static int get_delay(void)
 	return -1;                                           /* time is up */
     }
 
-    /* has the warning time past? */
+    /* has the warning time passed? */
     if (pam_misc_conv_warn_time && now >= pam_misc_conv_warn_time) {
 	fprintf(stderr, "%s", pam_misc_conv_warn_line);
 	pam_misc_conv_warn_time = 0;                    /* reset warn_time */
@@ -145,9 +147,10 @@ static int read_string(int echo, const char *prompt, char **retstr)
 	    return -1;
 	}
 	memcpy(&term_tmp, &term_before, sizeof(term_tmp));
-	if (!echo) {
+	if (echo)
+	    term_tmp.c_lflag |= ICANON | ECHOCTL;
+	else
 	    term_tmp.c_lflag &= ~(ECHO);
-	}
 	have_term = 1;
 
 	/*
@@ -285,8 +288,7 @@ int misc_conv(int num_msg, const struct pam_message **msgm,
 
     D(("allocating empty response structure array."));
 
-    reply = (struct pam_response *) calloc(num_msg,
-					   sizeof(struct pam_response));
+    reply = calloc(num_msg, sizeof(struct pam_response));
     if (reply == NULL) {
 	D(("no memory for responses"));
 	return PAM_CONV_ERR;

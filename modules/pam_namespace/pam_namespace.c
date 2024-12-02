@@ -34,12 +34,14 @@
 
 #define _ATFILE_SOURCE
 
+#include "config.h"
+#include <stdint.h>
 #include "pam_cc_compat.h"
 #include "pam_inline.h"
 #include "pam_namespace.h"
 #include "argv_parse.h"
 
-/* --- evaluting all files in VENDORDIR/security/namespace.d and /etc/security/namespace.d --- */
+/* --- evaluating all files in VENDORDIR/security/namespace.d and /etc/security/namespace.d --- */
 static const char *base_name(const char *path)
 {
     const char *base = strrchr(path, '/');
@@ -51,6 +53,14 @@ compare_filename(const void *a, const void *b)
 {
 	return strcmp(base_name(* (char * const *) a),
 		      base_name(* (char * const *) b));
+}
+
+static void close_fds_pre_exec(struct instance_data *idata)
+{
+	if (pam_modutil_sanitize_helper_fds(idata->pamh, PAM_MODUTIL_IGNORE_FD,
+			PAM_MODUTIL_IGNORE_FD, PAM_MODUTIL_IGNORE_FD) < 0) {
+		_exit(1);
+	}
 }
 
 /* Evaluating a list of files which have to be parsed in the right order:
@@ -196,7 +206,7 @@ static void cleanup_protect_data(pam_handle_t *pamh UNUSED , void *data, int err
 	unprotect_dirs(data);
 }
 
-static char *expand_variables(const char *orig, const char *var_names[], const char *var_values[])
+static char *expand_variables(const char *orig, const char *const var_names[], const char *var_values[])
 {
 	const char *src = orig;
 	char *dst;
@@ -207,7 +217,7 @@ static char *expand_variables(const char *orig, const char *var_names[], const c
 		if (*src == '$') {
 			int i;
 			for (i = 0; var_names[i]; i++) {
-				int namelen = strlen(var_names[i]);
+				size_t namelen = strlen(var_names[i]);
 				if (strncmp(var_names[i], src+1, namelen) == 0) {
 					dstlen += strlen(var_values[i]) - 1; /* $ */
 					src += namelen;
@@ -225,7 +235,7 @@ static char *expand_variables(const char *orig, const char *var_names[], const c
 		if (c == '$') {
 			int i;
 			for (i = 0; var_names[i]; i++) {
-				int namelen = strlen(var_names[i]);
+				size_t namelen = strlen(var_names[i]);
 				if (strncmp(var_names[i], src+1, namelen) == 0) {
 					dst = stpcpy(dst, var_values[i]);
 					--dst;
@@ -392,9 +402,9 @@ static int parse_method(char *method, struct polydir_s *poly,
 {
     enum polymethod pm;
     char *sptr = NULL;
-    static const char *method_names[] = { "user", "context", "level", "tmpdir",
+    static const char *const method_names[] = { "user", "context", "level", "tmpdir",
 	"tmpfs", NULL };
-    static const char *flag_names[] = { "create", "noinit", "iscript",
+    static const char *const flag_names[] = { "create", "noinit", "iscript",
 	"shared", "mntopts", NULL };
     static const unsigned int flag_values[] = { POLYDIR_CREATE, POLYDIR_NOINIT,
 	POLYDIR_ISCRIPT, POLYDIR_SHARED, POLYDIR_MNTOPTS };
@@ -419,7 +429,7 @@ static int parse_method(char *method, struct polydir_s *poly,
 
     while ((flag=strtok_r(NULL, ":", &sptr)) != NULL) {
 	for (i = 0; flag_names[i]; i++) {
-		int namelen = strlen(flag_names[i]);
+		size_t namelen = strlen(flag_names[i]);
 
 		if (strncmp(flag, flag_names[i], namelen) == 0) {
 			poly->flags |= flag_values[i];
@@ -465,7 +475,7 @@ static int parse_method(char *method, struct polydir_s *poly,
  * of the namespace configuration file. It skips over comments and incomplete
  * or malformed lines. It processes a valid line with information on
  * polyinstantiating a directory by populating appropriate fields of a
- * polyinstatiated directory structure and then calling add_polydir_entry to
+ * polyinstantiated directory structure and then calling add_polydir_entry to
  * add that entry to the linked list of polyinstantiated directories.
  */
 static int process_line(char *line, const char *home, const char *rhome,
@@ -477,15 +487,15 @@ static int process_line(char *line, const char *home, const char *rhome,
     struct polydir_s *poly;
     int retval = 0;
     char **config_options = NULL;
-    static const char *var_names[] = {"HOME", "USER", NULL};
+    static const char *const var_names[] = {"HOME", "USER", NULL};
     const char *var_values[] = {home, idata->user};
     const char *rvar_values[] = {rhome, idata->ruser};
-    int len;
+    size_t len;
 
     /*
      * skip the leading white space
      */
-    while (*line && isspace(*line))
+    while (*line && isspace((unsigned char)*line))
         line++;
 
     /*
@@ -529,7 +539,7 @@ static int process_line(char *line, const char *home, const char *rhome,
     instance_prefix = config_options[1];
     if (instance_prefix == NULL) {
         pam_syslog(idata->pamh, LOG_NOTICE, "Invalid line missing instance_prefix");
-        instance_prefix = NULL;
+        dir = NULL;
         goto skipping;
     }
     method = config_options[2];
@@ -592,26 +602,20 @@ static int process_line(char *line, const char *home, const char *rhome,
      * Populate polyinstantiated directory structure with appropriate
      * pathnames and the method with which to polyinstantiate.
      */
-    if (strlen(dir) >= sizeof(poly->dir)
-        || strlen(rdir) >= sizeof(poly->rdir)
-	|| strlen(instance_prefix) >= sizeof(poly->instance_prefix)) {
-	pam_syslog(idata->pamh, LOG_NOTICE, "Pathnames too long");
-	goto skipping;
-    }
-    strcpy(poly->dir, dir);
-    strcpy(poly->rdir, rdir);
-    strcpy(poly->instance_prefix, instance_prefix);
-
     if (parse_method(method, poly, idata) != 0) {
 	    goto skipping;
     }
 
-    if (poly->method == TMPDIR) {
-	if (sizeof(poly->instance_prefix) - strlen(poly->instance_prefix) < 7) {
-		pam_syslog(idata->pamh, LOG_NOTICE, "Pathnames too long");
-		goto skipping;
-	}
-	strcat(poly->instance_prefix, "XXXXXX");
+#define COPY_STR(dst, src, apd)                                \
+	(snprintf((dst), sizeof(dst), "%s%s", (src), (apd)) != \
+		  (ssize_t) (strlen(src) + strlen(apd)))
+
+    if (COPY_STR(poly->dir, dir, "")
+	|| COPY_STR(poly->rdir, rdir, "")
+	|| COPY_STR(poly->instance_prefix, instance_prefix,
+		    poly->method == TMPDIR ? "XXXXXX" : "")) {
+	pam_syslog(idata->pamh, LOG_NOTICE, "Pathnames too long");
+	goto skipping;
     }
 
     /*
@@ -635,7 +639,7 @@ static int process_line(char *line, const char *home, const char *rhome,
     if (uids) {
         uid_t *uidptr;
         const char *ustr, *sstr;
-        int count, i;
+        size_t count, i;
 
 	if (*uids == '~') {
 		poly->flags |= POLYDIR_EXCLUSIVE;
@@ -644,8 +648,13 @@ static int process_line(char *line, const char *home, const char *rhome,
         for (count = 0, ustr = sstr = uids; sstr; ustr = sstr + 1, count++)
            sstr = strchr(ustr, ',');
 
+        if (count > UINT_MAX || count > SIZE_MAX / sizeof(uid_t)) {
+            pam_syslog(idata->pamh, LOG_ERR, "Too many uids encountered in configuration");
+            goto skipping;
+        }
+
         poly->num_uids = count;
-        poly->uid = (uid_t *) malloc(count * sizeof (uid_t));
+        poly->uid = malloc(count * sizeof (uid_t));
         uidptr = poly->uid;
         if (uidptr == NULL) {
             goto erralloc;
@@ -994,6 +1003,7 @@ static int form_context(const struct polydir_s *polyptr,
 		return rc;
 	}
 	/* Should never get here */
+	freecon(scon);
 	return PAM_SUCCESS;
 }
 #endif
@@ -1194,7 +1204,7 @@ static int protect_dir(const char *path, mode_t mode, int do_mkdir,
 	int dfd = AT_FDCWD;
 	int dfd_next;
 	int save_errno;
-	int flags = O_RDONLY;
+	int flags = O_RDONLY | O_DIRECTORY;
 	int rv = -1;
 	struct stat st;
 
@@ -1248,22 +1258,6 @@ static int protect_dir(const char *path, mode_t mode, int do_mkdir,
 		rv = openat(dfd, dir, flags);
 	}
 
-	if (rv != -1) {
-		if (fstat(rv, &st) != 0) {
-			save_errno = errno;
-			close(rv);
-			rv = -1;
-			errno = save_errno;
-			goto error;
-		}
-		if (!S_ISDIR(st.st_mode)) {
-			close(rv);
-			errno = ENOTDIR;
-			rv = -1;
-			goto error;
-		}
-	}
-
 	if (flags & O_NOFOLLOW) {
 		/* we are inside user-owned dir - protect */
 		if (protect_mount(rv, p, idata) == -1) {
@@ -1295,13 +1289,12 @@ static int check_inst_parent(char *ipath, struct instance_data *idata)
 	 * admin explicitly instructs to ignore the instance parent
 	 * mode by the "ignore_instance_parent_mode" argument).
 	 */
-	inst_parent = (char *) malloc(strlen(ipath)+1);
+	inst_parent = strdup(ipath);
 	if (!inst_parent) {
 		pam_syslog(idata->pamh, LOG_CRIT, "Error allocating pathname string");
 		return PAM_SESSION_ERR;
 	}
 
-	strcpy(inst_parent, ipath);
 	trailing_slash = strrchr(inst_parent, '/');
 	if (trailing_slash)
 		*trailing_slash = '\0';
@@ -1386,6 +1379,8 @@ static int inst_init(const struct polydir_s *polyptr, const char *ipath,
 					/* ignore failures, they don't matter */
 				}
 
+				close_fds_pre_exec(idata);
+
 				if (execle(init_script, init_script,
 					polyptr->dir, ipath, newdir?"1":"0", idata->user, NULL, envp) < 0)
 					_exit(1);
@@ -1438,7 +1433,9 @@ static int create_polydir(struct polydir_s *polyptr,
 
 #ifdef WITH_SELINUX
     if (idata->flags & PAMNS_SELINUX_ENABLED) {
-	getfscreatecon_raw(&oldcon_raw);
+	if (getfscreatecon_raw(&oldcon_raw) != 0)
+	    pam_syslog(idata->pamh, LOG_NOTICE,
+	               "Error retrieving fs create context: %m");
 
 	label_handle = selabel_open(SELABEL_CTX_FILE, NULL, 0);
 	if (!label_handle) {
@@ -1467,6 +1464,9 @@ static int create_polydir(struct polydir_s *polyptr,
     if (rc == -1) {
             pam_syslog(idata->pamh, LOG_ERR,
                        "Error creating directory %s: %m", dir);
+#ifdef WITH_SELINUX
+            freecon(oldcon_raw);
+#endif
             return PAM_SESSION_ERR;
     }
 
@@ -1824,6 +1824,7 @@ static int cleanup_tmpdirs(struct instance_data *idata)
 			_exit(1);
 		}
 #endif
+		close_fds_pre_exec(idata);
 		if (execle("/bin/rm", "/bin/rm", "-rf", pptr->instance_prefix, NULL, envp) < 0)
 			_exit(1);
 	    } else if (pid > 0) {
@@ -1840,7 +1841,7 @@ static int cleanup_tmpdirs(struct instance_data *idata)
 		}
 	    } else if (pid < 0) {
 		pam_syslog(idata->pamh, LOG_ERR,
-			"Cannot fork to run namespace init script, %m");
+			"Cannot fork to cleanup temporary directory, %m");
 		rc = PAM_SESSION_ERR;
 		goto out;
 	    }

@@ -13,11 +13,7 @@
 #include <fcntl.h>
 #include <time.h>
 #include <errno.h>
-#ifdef HAVE_UTMP_H
-# include <utmp.h>
-#else
-# include <lastlog.h>
-#endif
+#include <utmp.h>
 #include <pwd.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -70,6 +66,7 @@ struct lastlog {
 #include <security/pam_modutil.h>
 #include <security/pam_ext.h>
 #include "pam_inline.h"
+#include "pam_i18n.h"
 
 /* argument parsing */
 
@@ -205,7 +202,7 @@ get_lastlog_uid_max(pam_handle_t *pamh)
 	return uid_max;
 
     ep = s + strlen(s);
-    while (ep > s && isspace(*(--ep))) {
+    while (ep > s && isspace((unsigned char)*(--ep))) {
 	*ep = '\0';
     }
     errno = 0;
@@ -665,9 +662,8 @@ cleanup:
 }
 
 /* --- authentication (locking out inactive users) functions --- */
-int
-pam_sm_authenticate(pam_handle_t *pamh, int flags,
-		    int argc, const char **argv)
+static int
+pam_auth(pam_handle_t *pamh, int flags, int argc, const char **argv)
 {
     int retval, ctrl;
     const char *user = NULL;
@@ -678,7 +674,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
     int last_fd;
 
     /*
-     * Lock out the user if he did not login recently enough.
+     * Lock out users if they did not login recently enough.
      */
 
     ctrl = _pam_auth_parse(pamh, flags, argc, argv, &inactive_days);
@@ -742,10 +738,17 @@ pam_sm_setcred(pam_handle_t *pamh UNUSED, int flags UNUSED,
 }
 
 int
+pam_sm_authenticate(pam_handle_t *pamh, int flags,
+		    int argc, const char **argv)
+{
+    return pam_auth(pamh, flags, argc, argv);
+}
+
+int
 pam_sm_acct_mgmt(pam_handle_t *pamh, int flags,
 		    int argc, const char **argv)
 {
-    return pam_sm_authenticate(pamh, flags, argc, argv);
+    return pam_auth(pamh, flags, argc, argv);
 }
 
 /* --- session management functions --- */
@@ -779,7 +782,7 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 
     pwd = pam_modutil_getpwnam (pamh, user);
     if (pwd == NULL) {
-	D(("couldn't identify user %s", user));
+	D(("couldn't identify user %s", (const char *) user));
 	return PAM_USER_UNKNOWN;
     }
     uid = pwd->pw_uid;

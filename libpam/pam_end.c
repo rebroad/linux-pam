@@ -13,9 +13,9 @@ int pam_end(pam_handle_t *pamh, int pam_status)
 {
     int ret;
 
-    D(("entering pam_end()"));
+    D(("called."));
 
-    IF_NO_PAMH("pam_end", pamh, PAM_SYSTEM_ERR);
+    IF_NO_PAMH(pamh, PAM_SYSTEM_ERR);
 
     if (__PAM_FROM_MODULE(pamh)) {
 	D(("called from module!?"));
@@ -26,7 +26,7 @@ int pam_end(pam_handle_t *pamh, int pam_status)
     _pam_audit_end(pamh, pam_status);
 #endif
 
-    /* first liberate the modules (it is not inconcevible that the
+    /* first liberate the modules (it is not inconceivable that the
        modules may need to use the service_name etc. to clean up) */
 
     _pam_free_data(pamh, pam_status);
@@ -93,7 +93,7 @@ int pam_end(pam_handle_t *pamh, int pam_status)
 
     _pam_drop(pamh);
 
-    D(("exiting pam_end() successfully"));
+    D(("exiting successfully"));
 
     return PAM_SUCCESS;
 }

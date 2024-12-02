@@ -63,9 +63,9 @@
 
 #include "pam_inline.h"
 
-#define SEPERMIT_CONF_FILE	(SCONFIGDIR "/sepermit.conf")
-#ifdef VENDOR_SCONFIGDIR
-# define SEPERMIT_VENDOR_CONF_FILE	(VENDOR_SCONFIGDIR "/sepermit.conf");
+#define SEPERMIT_CONF_FILE	(SCONFIG_DIR "/sepermit.conf")
+#ifdef VENDOR_SCONFIG_DIR
+# define SEPERMIT_VENDOR_CONF_FILE	(VENDOR_SCONFIG_DIR "/sepermit.conf");
 #endif
 #define MODULE "pam_sepermit"
 #define OPT_DELIM ":"
@@ -82,21 +82,27 @@ struct lockfd {
 static int
 match_process_uid(pid_t pid, uid_t uid)
 {
-	char buf[128];
+	char *buf;
+	size_t n;
 	uid_t puid;
 	FILE *f;
 	int re = 0;
 
-	snprintf (buf, sizeof buf, PROC_BASE "/%d/status", pid);
-	if (!(f = fopen (buf, "r")))
+	if (asprintf (&buf, PROC_BASE "/%d/status", pid) < 0)
 		return 0;
+	n = strlen(buf) + 1;
+	if (!(f = fopen (buf, "r"))) {
+		free(buf);
+		return 0;
+	}
 
-	while (fgets(buf, sizeof buf, f)) {
+	while (getline(&buf, &n, f) != -1) {
 		if (sscanf (buf, "Uid:\t%d", &puid)) {
 			re = uid == puid;
 			break;
 		}
 	}
+	free(buf);
 	fclose(f);
 	return re;
 }
@@ -299,10 +305,10 @@ sepermit_match(pam_handle_t *pamh, const char *cfgfile, const char *user,
 			continue;
 
 		start = line;
-		while (isspace(*start))
+		while (isspace((unsigned char)*start))
 			++start;
 		n = strlen(start);
-		while (n > 0 && isspace(start[n-1])) {
+		while (n > 0 && isspace((unsigned char)start[n-1])) {
 			--n;
 		}
 		if (n == 0)
@@ -365,9 +371,8 @@ sepermit_match(pam_handle_t *pamh, const char *cfgfile, const char *user,
 		return -1;
 }
 
-int
-pam_sm_authenticate(pam_handle_t *pamh, int flags UNUSED,
-		    int argc, const char **argv)
+static int
+pam_sepermit(pam_handle_t *pamh, int argc, const char **argv)
 {
 	int i;
 	int rv;
@@ -454,8 +459,15 @@ pam_sm_setcred (pam_handle_t *pamh UNUSED, int flags UNUSED,
 }
 
 int
-pam_sm_acct_mgmt(pam_handle_t *pamh, int flags,
-		     int argc, const char **argv)
+pam_sm_authenticate(pam_handle_t *pamh, int flags UNUSED,
+		    int argc, const char **argv)
 {
-	return pam_sm_authenticate(pamh, flags, argc, argv);
+	return pam_sepermit(pamh, argc, argv);
+}
+
+int
+pam_sm_acct_mgmt(pam_handle_t *pamh, int flags UNUSED,
+		 int argc, const char **argv)
+{
+	return pam_sepermit(pamh, argc, argv);
 }

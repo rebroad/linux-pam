@@ -6,7 +6,9 @@
 
 #include "config.h"
 
+#include <limits.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -98,10 +100,26 @@ static int perform_check(pam_handle_t *pamh, struct opt_s *opts)
 	    goto clean_up_fd;
 	}
 
+	/*
+	 * on some OSes (e.g. Hurd) reading a directory succeeds,
+	 * instead of failing with EISDIR; hence, work as if
+	 * pam_modutil_read later on would fail
+	 */
+	if (S_ISDIR(st.st_mode)) {
+	    retval = PAM_SYSTEM_ERR;
+	    goto clean_up_fd;
+	}
+
 	/* Don't print anything if the message is empty, will only
 	   disturb the output with empty lines */
 	if (st.st_size > 0) {
-	    char *mtmp = malloc(st.st_size+1);
+	    char *mtmp;
+	    if ((uintmax_t)st.st_size > (uintmax_t)INT_MAX) {
+	        pam_syslog(pamh, LOG_CRIT, "file too large");
+	        retval = PAM_SYSTEM_ERR;
+	        goto clean_up_fd;
+	    }
+	    mtmp = malloc(st.st_size+1);
 	    if (!mtmp) {
 	        pam_syslog(pamh, LOG_CRIT, "out of memory");
 	        retval = PAM_BUF_ERR;

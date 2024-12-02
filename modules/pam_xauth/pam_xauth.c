@@ -73,11 +73,6 @@
 #define XAUTHDEF ".Xauthority"
 #define XAUTHTMP ".xauthXXXXXX"
 
-/* Hurd compatibility */
-#ifndef PATH_MAX
-#define PATH_MAX 4096
-#endif
-
 /* Possible paths to xauth executable */
 static const char * const xauthpaths[] = {
 #ifdef PAM_PATH_XAUTH
@@ -92,14 +87,13 @@ static const char * const xauthpaths[] = {
  * given input on stdin, and storing any output it generates. */
 static int
 run_coprocess(pam_handle_t *pamh, const char *input, char **output,
-	      uid_t uid, gid_t gid, const char *command, ...)
+	      uid_t uid, gid_t gid, const char *command, const char *argv[])
 {
 	int ipipe[2], opipe[2], i;
 	char buf[LINE_MAX];
 	pid_t child;
 	char *buffer = NULL;
 	size_t buffer_size = 0;
-	va_list ap;
 	struct sigaction newsa, oldsa;
 
 	*output = NULL;
@@ -139,9 +133,6 @@ run_coprocess(pam_handle_t *pamh, const char *input, char **output,
 	}
 
 	if (child == 0) {
-		/* We're the child. */
-		size_t j;
-		const char *args[10] = {};
 		/* Drop privileges. */
 		if (setgid(gid) == -1)
 		  {
@@ -181,18 +172,9 @@ run_coprocess(pam_handle_t *pamh, const char *input, char **output,
 						    PAM_MODUTIL_NULL_FD) < 0) {
 		    _exit(1);
 		}
-		/* Convert the varargs list into a regular array of strings. */
-		va_start(ap, command);
-		args[0] = command;
-		for (j = 1; j < PAM_ARRAY_SIZE(args) - 1; j++) {
-			args[j] = va_arg(ap, const char*);
-			if (args[j] == NULL) {
-				break;
-			}
-		}
 		/* Run the command. */
 		DIAG_PUSH_IGNORE_CAST_QUAL;
-		execv(command, (char *const *) args);
+		execv(command, (char *const *) argv);
 		DIAG_POP_IGNORE_CAST_QUAL;
 		/* Never reached. */
 		_exit(1);
@@ -215,9 +197,7 @@ run_coprocess(pam_handle_t *pamh, const char *input, char **output,
 		tmp = realloc(buffer, buffer_size + i + 1);
 		if (tmp == NULL) {
 			/* Uh-oh, bail. */
-			if (buffer != NULL) {
-				free(buffer);
-			}
+			free(buffer);
 			close(opipe[0]);
 			waitpid(child, NULL, 0);
 			sigaction(SIGCHLD, &oldsa, NULL);   /* restore old signal handler */
@@ -255,7 +235,7 @@ check_acl(pam_handle_t *pamh,
 	  const char *sense, const char *this_user, const char *other_user,
 	  int noent_code, int debug)
 {
-	char path[PATH_MAX];
+	char *path = NULL;
 	struct passwd *pwd;
 	FILE *fp = NULL;
 	int i, fd = -1, save_errno;
@@ -271,14 +251,17 @@ check_acl(pam_handle_t *pamh,
 		return PAM_SESSION_ERR;
 	}
 	/* Figure out what that file is really named. */
-	i = snprintf(path, sizeof(path), "%s/.xauth/%s", pwd->pw_dir, sense);
-	if ((i >= (int)sizeof(path)) || (i < 0)) {
+	i = asprintf(&path, "%s/.xauth/%s", pwd->pw_dir, sense);
+	if (i < 0) {
 		pam_syslog(pamh, LOG_ERR,
-			   "name of user's home directory is too long");
+			   "cannot allocate path buffer for ~/.xauth/%s",
+			   sense);
 		return PAM_SESSION_ERR;
 	}
-	if (pam_modutil_drop_priv(pamh, &privs, pwd))
+	if (pam_modutil_drop_priv(pamh, &privs, pwd)) {
+		free(path);
 		return PAM_SESSION_ERR;
+	}
 	if (!stat(path, &st)) {
 		if (!S_ISREG(st.st_mode))
 			errno = EINVAL;
@@ -289,6 +272,7 @@ check_acl(pam_handle_t *pamh,
 	if (pam_modutil_regain_priv(pamh, &privs)) {
 		if (fd >= 0)
 			close(fd);
+		free(path);
 		return PAM_SESSION_ERR;
 	}
 	if (fd >= 0) {
@@ -304,24 +288,20 @@ check_acl(pam_handle_t *pamh,
 		}
 	}
 	if (fp) {
-		char buf[LINE_MAX], *tmp;
+		char *buf = NULL;
+		size_t n = 0;
 		/* Scan the file for a list of specs of users to "trust". */
-		while (fgets(buf, sizeof(buf), fp) != NULL) {
-			tmp = memchr(buf, '\r', sizeof(buf));
-			if (tmp != NULL) {
-				*tmp = '\0';
-			}
-			tmp = memchr(buf, '\n', sizeof(buf));
-			if (tmp != NULL) {
-				*tmp = '\0';
-			}
+		while (getline(&buf, &n, fp) != -1) {
+			buf[strcspn(buf, "\r\n")] = '\0';
 			if (fnmatch(buf, other_user, 0) == 0) {
 				if (debug) {
 					pam_syslog(pamh, LOG_DEBUG,
 						   "%s %s allowed by %s",
 						   other_user, sense, path);
 				}
+				free(buf);
 				fclose(fp);
+				free(path);
 				return PAM_SUCCESS;
 			}
 		}
@@ -330,7 +310,9 @@ check_acl(pam_handle_t *pamh,
 			pam_syslog(pamh, LOG_DEBUG, "%s not listed in %s",
 				   other_user, path);
 		}
+		free(buf);
 		fclose(fp);
+		free(path);
 		return PAM_PERM_DENIED;
 	} else {
 		/* Default to okay if the file doesn't exist. */
@@ -350,12 +332,19 @@ check_acl(pam_handle_t *pamh,
 						   path);
 				}
 			}
+			free(path);
 			return noent_code;
+		case ENAMETOOLONG:
+			pam_syslog(pamh, LOG_ERR,
+				   "error opening %s: %m", path);
+			free(path);
+			return PAM_SESSION_ERR;
 		default:
 			if (debug) {
 				pam_syslog(pamh, LOG_DEBUG,
 					   "error opening %s: %m", path);
 			}
+			free(path);
 			return PAM_PERM_DENIED;
 		}
 	}
@@ -515,16 +504,14 @@ pam_sm_open_session (pam_handle_t *pamh, int flags UNUSED,
 	/* Figure out where the source user's .Xauthority file is. */
 	if (getenv(XAUTHENV) != NULL) {
 		cookiefile = strdup(getenv(XAUTHENV));
-	} else {
-		cookiefile = malloc(strlen(rpwd->pw_dir) + 1 +
-				    strlen(XAUTHDEF) + 1);
 		if (cookiefile == NULL) {
 			retval = PAM_SESSION_ERR;
 			goto cleanup;
 		}
-		strcpy(cookiefile, rpwd->pw_dir);
-		strcat(cookiefile, "/");
-		strcat(cookiefile, XAUTHDEF);
+	} else if (asprintf(&cookiefile, "%s/%s", rpwd->pw_dir, XAUTHDEF) < 0) {
+		cookiefile = NULL;
+		retval = PAM_SESSION_ERR;
+		goto cleanup;
 	}
 	if (debug) {
 		pam_syslog(pamh, LOG_DEBUG, "reading keys from `%s'",
@@ -542,8 +529,10 @@ pam_sm_open_session (pam_handle_t *pamh, int flags UNUSED,
 	}
 	if (run_coprocess(pamh, NULL, &cookie,
 			  getuid(), getgid(),
+			  xauth, (const char *[]) {
 			  xauth, "-f", cookiefile, "nlist", display,
-			  NULL) == 0) {
+			  NULL}) == 0) {
+		char *cookiedata;
 #ifdef WITH_SELINUX
 		char *context_raw = NULL;
 #endif
@@ -553,31 +542,18 @@ pam_sm_open_session (pam_handle_t *pamh, int flags UNUSED,
 		if (((cookie == NULL) || (strlen(cookie) == 0)) &&
 		    (pam_str_skip_prefix(display, "localhost:") != NULL ||
 		     pam_str_skip_prefix(display, "localhost/unix:") != NULL)) {
-			char *t, *screen;
-			size_t tlen, slen;
+			char hostname[HOST_NAME_MAX + 1];
 			/* Free the useless cookie string. */
-			if (cookie != NULL) {
-				free(cookie);
-				cookie = NULL;
-			}
-			/* Allocate enough space to hold an adjusted name. */
-			tlen = strlen(display) + LINE_MAX + 1;
-			t = calloc(1, tlen);
-			if (t != NULL) {
-				if (gethostname(t, tlen - 1) != -1) {
-					/* Append the protocol and then the
-					 * screen number. */
-					if (strlen(t) < tlen - 6) {
-						strcat(t, "/unix:");
-					}
-					screen = strchr(display, ':');
-					if (screen != NULL) {
-						screen++;
-						slen = strlen(screen);
-						if (strlen(t) + slen < tlen) {
-							strcat(t, screen);
-						}
-					}
+			free(cookie);
+			cookie = NULL;
+			if (gethostname(hostname, sizeof(hostname)) != -1) {
+				const char *screen;
+				char *t;
+
+				/* Append protocol and screen number to host. */
+				screen = display + strcspn(display, ":");
+				if (asprintf(&t, "%s/unix%s",
+					     hostname, screen) >= 0) {
 					if (debug) {
 						pam_syslog(pamh, LOG_DEBUG,
 							   "no key for `%s', "
@@ -600,11 +576,11 @@ pam_sm_open_session (pam_handle_t *pamh, int flags UNUSED,
 					}
 					run_coprocess(pamh, NULL, &cookie,
 						      getuid(), getgid(),
+						      xauth, (const char *[]) {
 						      xauth, "-f", cookiefile,
-						      "nlist", t, NULL);
+						      "nlist", t, NULL});
+					free(t);
 				}
-				free(t);
-				t = NULL;
 			}
 		}
 
@@ -637,11 +613,14 @@ pam_sm_open_session (pam_handle_t *pamh, int flags UNUSED,
 #ifdef WITH_SELINUX
 		if (is_selinux_enabled() > 0) {
 			struct selabel_handle *ctx = selabel_open(SELABEL_CTX_FILE, NULL, 0);
-			if (ctx != NULL) {
+			if (!ctx) {
+				pam_syslog(pamh, LOG_WARNING,
+					   "could not initialize SELinux labeling handle: %m");
+			} else {
 				if (selabel_lookup_raw(ctx, &context_raw,
 						       xauthority + sizeof(XAUTHENV), S_IFREG) != 0) {
 					pam_syslog(pamh, LOG_WARNING,
-						   "could not get SELinux label for '%s'",
+						   "could not get SELinux label for '%s': %m",
 						   xauthority + sizeof(XAUTHENV));
 				}
 				selabel_close(ctx);
@@ -672,15 +651,19 @@ pam_sm_open_session (pam_handle_t *pamh, int flags UNUSED,
 
 		/* Get a copy of the filename to save as a data item for
 		 * removal at session-close time. */
-		free(cookiefile);
-		cookiefile = strdup(xauthority + sizeof(XAUTHENV));
+		cookiedata = strdup(xauthority + sizeof(XAUTHENV));
+		if (!cookiedata) {
+			retval = PAM_SESSION_ERR;
+			goto cleanup;
+		}
 
 		/* Save the filename. */
-		if (pam_set_data(pamh, DATANAME, cookiefile, cleanup) != PAM_SUCCESS) {
+		if (pam_set_data(pamh, DATANAME, cookiedata, cleanup) != PAM_SUCCESS) {
 			pam_syslog(pamh, LOG_ERR,
 				   "error saving name of temporary file `%s'",
-				   cookiefile);
-			unlink(cookiefile);
+				   cookiedata);
+			unlink(cookiedata);
+			free(cookiedata);
 			retval = PAM_SESSION_ERR;
 			goto cleanup;
 		}
@@ -700,7 +683,6 @@ pam_sm_open_session (pam_handle_t *pamh, int flags UNUSED,
 		  if (asprintf(&d, "DISPLAY=%s", display) < 0)
 		    {
 		      pam_syslog(pamh, LOG_CRIT, "out of memory");
-		      cookiefile = NULL;
 		      retval = PAM_SESSION_ERR;
 		      goto cleanup;
 		    }
@@ -731,21 +713,21 @@ pam_sm_open_session (pam_handle_t *pamh, int flags UNUSED,
 		if (debug) {
 			pam_syslog(pamh, LOG_DEBUG,
 				   "writing key `%s' to temporary file `%s'",
-				   cookie, cookiefile);
+				   cookie, cookiedata);
 		}
 		if (debug) {
 			pam_syslog(pamh, LOG_DEBUG,
 				  "running \"%s %s %s %s %s\" as %lu/%lu",
-				  xauth, "-f", cookiefile, "nmerge", "-",
+				  xauth, "-f", cookiedata, "nmerge", "-",
 				  (unsigned long) tpwd->pw_uid,
 				  (unsigned long) tpwd->pw_gid);
 		}
 		run_coprocess(pamh, cookie, &tmp,
 			      tpwd->pw_uid, tpwd->pw_gid,
-			      xauth, "-f", cookiefile, "nmerge", "-", NULL);
+			      xauth, (const char *[]) {
+			      xauth, "-f", cookiedata, "nmerge", "-", NULL});
 
 		/* We don't need to keep a copy of these around any more. */
-		cookiefile = NULL;
 		free(tmp);
 	}
 cleanup:

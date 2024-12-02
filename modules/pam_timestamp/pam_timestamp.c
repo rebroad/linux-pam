@@ -72,6 +72,7 @@
 #include <security/pam_ext.h>
 #include <security/pam_modutil.h>
 #include "pam_inline.h"
+#include "pam_i18n.h"
 
 /* The default timeout we use is 5 minutes, which matches the sudo default
  * for the timestamp_timeout parameter. */
@@ -82,7 +83,9 @@
 
 /* Various buffers we use need to be at least as large as either PATH_MAX or
  * LINE_MAX, so choose the larger of the two. */
-#if (LINE_MAX > PATH_MAX)
+#ifndef PATH_MAX
+#define BUFLEN LINE_MAX
+#elif (LINE_MAX > PATH_MAX)
 #define BUFLEN LINE_MAX
 #else
 #define BUFLEN PATH_MAX
@@ -97,13 +100,13 @@ check_dir_perms(pam_handle_t *pamh, const char *tdir)
 {
 	char scratch[BUFLEN] = {};
 	struct stat st;
-	int i;
+	size_t i;
 	/* Check that the directory is "safe". */
 	if ((tdir == NULL) || (strlen(tdir) == 0)) {
 		return PAM_AUTH_ERR;
 	}
 	/* Iterate over the path, checking intermediate directories. */
-	for (i = 0; (tdir[i] != '\0') && (i < (int)sizeof(scratch)); i++) {
+	for (i = 0; (i < sizeof(scratch)) && (tdir[i] != '\0'); i++) {
 		scratch[i] = tdir[i];
 		if ((scratch[i] == '/') || (tdir[i + 1] == '\0')) {
 			/* We now have the name of a directory in the path, so
@@ -479,6 +482,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
 #ifdef WITH_OPENSSL
 		if (hmac_size(pamh, debug, &maclen)) {
+			close(fd);
 			return PAM_AUTH_ERR;
 		}
 #else
@@ -555,7 +559,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
 		}
 #ifdef USE_LOGIND
 		struct passwd *pwd = pam_modutil_getpwnam(pamh, ruser);
-		if (pwd != NULL) {
+		if (pwd == NULL) {
 		  return PAM_SERVICE_ERR;
 		}
 		if (check_login_time(pwd->pw_uid, then) != PAM_SUCCESS)
@@ -750,7 +754,7 @@ pam_sm_close_session(pam_handle_t *pamh UNUSED, int flags UNUSED, int argc UNUSE
 int
 main(int argc, char **argv)
 {
-	int i, retval = 0, dflag = 0, kflag = 0;
+	int i, retval, dflag = 0, kflag = 0;
 	const char *target_user = NULL, *user = NULL, *tty = NULL;
 	struct passwd *pwd;
 	struct timeval tv;
@@ -795,7 +799,7 @@ main(int argc, char **argv)
 	if (geteuid() != 0) {
 		fprintf(stderr, "%s must be setuid root\n",
 			argv[0]);
-		retval = 2;
+		return 2;
 	}
 
 	/* Check that we have a controlling tty. */
@@ -813,7 +817,8 @@ main(int argc, char **argv)
 	/* Get the name of the invoking (requesting) user. */
 	pwd = getpwuid(getuid());
 	if (pwd == NULL) {
-		retval = 4;
+		fprintf(stderr, "unknown user\n");
+		return 4;
 	}
 #ifdef USE_LOGIND
 	uid = pwd->pw_uid;
@@ -822,43 +827,42 @@ main(int argc, char **argv)
 	/* Get the name of the target user. */
 	user = strdup(pwd->pw_name);
 	if (user == NULL) {
-		retval = 4;
-	} else {
-		target_user = (optind < argc) ? argv[optind] : user;
-		if ((strchr(target_user, '.') != NULL) ||
-		    (strchr(target_user, '/') != NULL) ||
-		    (strchr(target_user, '%') != NULL)) {
-			fprintf(stderr, "unknown user: %s\n",
-				target_user);
-			retval = 4;
-		}
+		fprintf(stderr, "out of memory\n");
+		return 4;
+	}
+	target_user = (optind < argc) ? argv[optind] : user;
+	if ((strchr(target_user, '.') != NULL) ||
+	    (strchr(target_user, '/') != NULL) ||
+	    (strchr(target_user, '%') != NULL)) {
+		fprintf(stderr, "invalid user: %s\n", target_user);
+		return 4;
 	}
 
 	/* Sanity check the tty to make sure we should be checking
 	 * for timestamps which pertain to it. */
-	if (retval == 0) {
-		tty = check_tty(tty);
-		if (tty == NULL) {
-			fprintf(stderr, "invalid tty\n");
-			retval = 6;
-		}
+	tty = check_tty(tty);
+	if (tty == NULL) {
+		fprintf(stderr, "invalid tty\n");
+		return 6;
+	}
+
+	/* Generate the name of the timestamp file. */
+	if (format_timestamp_name(path, sizeof(path), TIMESTAMPDIR,
+				  tty, user, target_user) >= (int) sizeof(path)) {
+		fprintf(stderr, "path too long\n");
+		return 4;
 	}
 
 	do {
-		/* Sanity check the timestamp directory itself. */
-		if (retval == 0) {
+		retval = 0;
+		do {
+			/* Sanity check the timestamp directory itself. */
 			if (check_dir_perms(NULL, TIMESTAMPDIR) != PAM_SUCCESS) {
 				retval = 5;
+				break;
 			}
-		}
 
-		if (retval == 0) {
-			/* Generate the name of the timestamp file. */
-			format_timestamp_name(path, sizeof(path), TIMESTAMPDIR,
-					      tty, user, target_user);
-		}
 
-		if (retval == 0) {
 			if (kflag) {
 				/* Remove the timestamp. */
 				if (lstat(path, &st) != -1) {
@@ -882,7 +886,7 @@ main(int argc, char **argv)
 					retval = 7;
 				}
 			}
-		}
+		} while (0);
 
 		if (dflag > 0) {
 			struct timeval now;
@@ -902,7 +906,6 @@ main(int argc, char **argv)
 			select(STDOUT_FILENO + 1,
 			       NULL, NULL, &write_fds,
 			       &tv);
-			retval = 0;
 		}
 	} while (dflag > 0);
 

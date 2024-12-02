@@ -26,9 +26,9 @@ static const char missing_file[] = TEST_NAME ".missing";
 static const char my_conf[] = TEST_NAME ".conf";
 static const char my_env[] = TEST_NAME ".env";
 #ifdef VENDORDIR
-static const char dir_usr_etc_security[] = TEST_NAME_DIR VENDOR_SCONFIGDIR;
+static const char dir_usr_etc_security[] = TEST_NAME_DIR VENDOR_SCONFIG_DIR;
 static const char usr_env[] = TEST_NAME_DIR VENDORDIR "/environment";
-static const char usr_conf[] = TEST_NAME_DIR VENDOR_SCONFIGDIR "/pam_env.conf";
+static const char usr_conf[] = TEST_NAME_DIR VENDOR_SCONFIG_DIR "/pam_env.conf";
 #endif
 
 static struct pam_conv conv;
@@ -69,8 +69,11 @@ setup(void)
 
 	ASSERT_NE(NULL, fp = fopen(my_conf, "w"));
 	ASSERT_LT(0, fprintf(fp,
-			     "EDITOR\tDEFAULT=vim\n"
-			     "PAGER\tDEFAULT=more\n"));
+			     "EDITOR\tDEFAULT=vi DEFAULT= DEFAULT=vim\n"
+			     "PAGER\tDEFAULT=more\n"
+			     "# ignore escaped newlines in comments \\\n"
+			     "NAME\tDEFAULT=@{PAM_\\ \t\n"
+			     "USER}\\\\name\n"));
 	ASSERT_EQ(0, fclose(fp));
 
 	ASSERT_NE(NULL, fp = fopen(my_env, "w"));
@@ -127,7 +130,7 @@ check_env(const char **list)
 	pam_handle_t *pamh = NULL;
 
 	ASSERT_EQ(PAM_SUCCESS,
-		  pam_start_confdir(service_file, "", &conv, ".", &pamh));
+		  pam_start_confdir(service_file, "user", &conv, ".", &pamh));
 	ASSERT_NE(NULL, pamh);
 
 	ASSERT_EQ(PAM_SUCCESS, pam_open_session(pamh, 0));
@@ -164,10 +167,10 @@ main(void)
 	 */
 	ASSERT_NE(NULL, fp = fopen(service_file, "w"));
 	ASSERT_LT(0, fprintf(fp, "#%%PAM-1.0\n"
-			     "auth required %s/.libs/%s.so conffile=%s/%s\n"
-			     "account required %s/.libs/%s.so conffile=%s/%s\n"
-			     "password required %s/.libs/%s.so conffile=%s/%s\n"
-			     "session required %s/.libs/%s.so conffile=%s/%s\n",
+			     "auth required %s/" LTDIR "%s.so conffile=%s/%s\n"
+			     "account required %s/" LTDIR "%s.so conffile=%s/%s\n"
+			     "password required %s/" LTDIR "%s.so conffile=%s/%s\n"
+			     "session required %s/" LTDIR "%s.so conffile=%s/%s\n",
 			     cwd, MODULE_NAME, cwd, missing_file,
 			     cwd, MODULE_NAME, cwd, missing_file,
 			     cwd, MODULE_NAME, cwd, missing_file,
@@ -193,14 +196,14 @@ main(void)
 	 */
 	ASSERT_NE(NULL, fp = fopen(service_file, "w"));
 	ASSERT_LT(0, fprintf(fp, "#%%PAM-1.0\n"
-			     "auth required %s/.libs/%s.so conffile=%s/%s\n"
-			     "auth required %s/../pam_permit/.libs/pam_permit.so\n"
-			     "account required %s/.libs/%s.so conffile=%s/%s\n"
-			     "account required %s/../pam_permit/.libs/pam_permit.so\n"
-			     "password required %s/.libs/%s.so conffile=%s/%s\n"
-			     "password required %s/../pam_permit/.libs/pam_permit.so\n"
-			     "session required %s/.libs/%s.so conffile=%s/%s\n"
-			     "session required %s/../pam_permit/.libs/pam_permit.so\n",
+			     "auth required %s/" LTDIR "%s.so conffile=%s/%s\n"
+			     "auth required %s/../pam_permit/" LTDIR "pam_permit.so\n"
+			     "account required %s/" LTDIR "%s.so conffile=%s/%s\n"
+			     "account required %s/../pam_permit/" LTDIR "pam_permit.so\n"
+			     "password required %s/" LTDIR "%s.so conffile=%s/%s\n"
+			     "password required %s/../pam_permit/" LTDIR "pam_permit.so\n"
+			     "session required %s/" LTDIR "%s.so conffile=%s/%s\n"
+			     "session required %s/../pam_permit/" LTDIR "pam_permit.so\n",
 			     cwd, MODULE_NAME, cwd, missing_file, cwd,
 			     cwd, MODULE_NAME, cwd, missing_file, cwd,
 			     cwd, MODULE_NAME, cwd, missing_file, cwd,
@@ -225,13 +228,13 @@ main(void)
 	 */
 	ASSERT_NE(NULL, fp = fopen(service_file, "w"));
 	ASSERT_LT(0, fprintf(fp, "#%%PAM-1.0\n"
-			     "session required %s/.libs/%s.so"
+			     "session required %s/" LTDIR "%s.so"
 			     " conffile=%s/%s envfile=%s\n",
 			     cwd, MODULE_NAME,
 			     cwd, my_conf, "/dev/null"));
 	ASSERT_EQ(0, fclose(fp));
 
-	const char *env1[] = { "EDITOR=vim", "PAGER=more", NULL };
+	const char *env1[] = { "EDITOR=vim", "PAGER=more", "NAME=user\\name", NULL };
 	check_env(env1);
 
 	/*
@@ -240,7 +243,7 @@ main(void)
 	 */
 	ASSERT_NE(NULL, fp = fopen(service_file, "w"));
 	ASSERT_LT(0, fprintf(fp, "#%%PAM-1.0\n"
-			     "session required %s/.libs/%s.so"
+			     "session required %s/" LTDIR "%s.so"
 			     " conffile=%s envfile=%s/%s\n",
 			     cwd, MODULE_NAME,
 			     "/dev/null", cwd, my_env));
@@ -254,7 +257,7 @@ main(void)
 	/* envfile is a directory. So values will be read from {TEST_NAME_DIR}/usr/etc and {TEST_NAME_DIR}/etc */
 	ASSERT_NE(NULL, fp = fopen(service_file, "w"));
 	ASSERT_LT(0, fprintf(fp, "#%%PAM-1.0\n"
-			     "session required %s/.libs/%s.so"
+			     "session required %s/" LTDIR "%s.so"
 			     " conffile=%s envfile=%s/%s/\n",
 			     cwd, MODULE_NAME,
 			     "/dev/null",
@@ -267,7 +270,7 @@ main(void)
 	/* conffile is a directory. So values will be read from {TEST_NAME_DIR}/usr/etc and {TEST_NAME_DIR}/etc */
 	ASSERT_NE(NULL, fp = fopen(service_file, "w"));
 	ASSERT_LT(0, fprintf(fp, "#%%PAM-1.0\n"
-			     "session required %s/.libs/%s.so"
+			     "session required %s/" LTDIR "%s.so"
 			     " conffile=%s/%s/ envfile=%s\n",
 			     cwd, MODULE_NAME,
 			     cwd, TEST_NAME_DIR,

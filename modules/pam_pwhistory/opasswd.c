@@ -34,9 +34,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if defined(HAVE_CONFIG_H)
 #include <config.h>
-#endif
 
 #include <pwd.h>
 #include <shadow.h>
@@ -76,9 +74,7 @@
 #define RANDOM_DEVICE "/dev/urandom"
 #endif
 
-#define DEFAULT_OLD_PASSWORDS_FILE SCONFIGDIR "/opasswd"
-
-#define DEFAULT_BUFLEN 4096
+#define DEFAULT_OLD_PASSWORDS_FILE SCONFIG_DIR "/opasswd"
 
 typedef struct {
   char *user;
@@ -88,7 +84,6 @@ typedef struct {
 } opwd;
 
 #ifdef HELPER_COMPILE
-PAM_FORMAT((printf, 2, 3))
 void
 helper_log_err(int err, const char *format, ...)
 {
@@ -124,23 +119,32 @@ parse_entry (char *line, opwd *data)
   return 0;
 }
 
+/* Return 1 if the passwords are equal, 0 if they are not, and -1 on error. */
 static int
 compare_password(const char *newpass, const char *oldpass)
 {
   char *outval;
-#ifdef HAVE_CRYPT_R
-  struct crypt_data output;
   int retval;
+#ifdef HAVE_CRYPT_R
+  struct crypt_data *cdata;
 
-  output.initialized = 0;
+  cdata = calloc(1, sizeof(*cdata));
+  if (!cdata)
+    return -1;
 
-  outval = crypt_r (newpass, oldpass, &output);
+  outval = crypt_r (newpass, oldpass, cdata);
 #else
   outval = crypt (newpass, oldpass);
 #endif
 
   retval = outval != NULL && strcmp(outval, oldpass) == 0;
+
+#ifdef HAVE_CRYPT_R
+  pam_overwrite_object(cdata);
+  free(cdata);
+#else
   pam_overwrite_string(outval);
+#endif
   return retval;
 }
 
@@ -172,46 +176,20 @@ check_old_pass, const char *user, const char *newpass, const char *filename, int
 
   while (!feof (oldpf))
     {
-      char *cp, *tmp;
-#if defined(HAVE_GETLINE)
       ssize_t n = getline (&buf, &buflen, oldpf);
-#elif defined (HAVE_GETDELIM)
-      ssize_t n = getdelim (&buf, &buflen, '\n', oldpf);
-#else
-      ssize_t n;
-
-      if (buf == NULL)
-        {
-          buflen = DEFAULT_BUFLEN;
-          buf = malloc (buflen);
-	  if (buf == NULL)
-	    return PAM_BUF_ERR;
-        }
-      buf[0] = '\0';
-      fgets (buf, buflen - 1, oldpf);
-      n = strlen (buf);
-#endif /* HAVE_GETLINE / HAVE_GETDELIM */
-      cp = buf;
 
       if (n < 1)
         break;
 
-      tmp = strchr (cp, '#');  /* remove comments */
-      if (tmp)
-        *tmp = '\0';
-      while (isspace ((int)*cp))    /* remove spaces and tabs */
-        ++cp;
-      if (*cp == '\0')        /* ignore empty lines */
+      buf[strcspn(buf, "\n")] = '\0';
+      if (buf[0] == '\0')        /* ignore empty lines */
         continue;
 
-      if (cp[strlen (cp) - 1] == '\n')
-        cp[strlen (cp) - 1] = '\0';
-
-      if (strncmp (cp, user, strlen (user)) == 0 &&
-          cp[strlen (user)] == ':')
+      if (strncmp (buf, user, strlen (user)) == 0 &&
+          buf[strlen (user)] == ':')
         {
           /* We found the line we needed */
-	  if (parse_entry (cp, &entry) == 0)
+	  if (parse_entry (buf, &entry) == 0)
 	    {
 	      found = 1;
 	      break;
@@ -231,13 +209,19 @@ check_old_pass, const char *user, const char *newpass, const char *filename, int
 
       do {
 	oldpass = strsep (&running, delimiters);
-	if (oldpass && strlen (oldpass) > 0 &&
-	    compare_password(newpass, oldpass) )
-	  {
-	    if (debug)
-	      pam_syslog (pamh, LOG_DEBUG, "New password already used");
-	    retval = PAM_AUTHTOK_ERR;
-	    break;
+	if (oldpass && strlen (oldpass) > 0) {
+	    int rc;
+
+	    rc = compare_password(newpass, oldpass);
+	    if (rc) {
+	      if (rc < 0)
+	        pam_syslog (pamh, LOG_ERR, "Cannot allocate crypt data");
+	      else if (debug)
+	        pam_syslog (pamh, LOG_DEBUG, "New password already used");
+
+	      retval = PAM_AUTHTOK_ERR;
+	      break;
+	    }
 	  }
       } while (oldpass != NULL);
     }
@@ -265,22 +249,30 @@ save_old_pass, const char *user, int howmany, const char *filename, int debug UN
   /* Define opasswd file and temp file for opasswd */
   const char *opasswd_file =
 	  (filename != NULL ? filename : DEFAULT_OLD_PASSWORDS_FILE);
-  char opasswd_tmp[PATH_MAX];
+  char *opasswd_tmp;
 
-  if ((size_t) snprintf (opasswd_tmp, sizeof (opasswd_tmp), "%s.tmpXXXXXX",
-			 opasswd_file) >= sizeof (opasswd_tmp))
+  if (asprintf (&opasswd_tmp, "%s.tmpXXXXXX", opasswd_file) < 0)
     return PAM_BUF_ERR;
 
   pwd = pam_modutil_getpwnam (pamh, user);
   if (pwd == NULL)
-    return PAM_USER_UNKNOWN;
+    {
+      free (opasswd_tmp);
+      return PAM_USER_UNKNOWN;
+    }
 
   if (howmany <= 0)
-    return PAM_SUCCESS;
+    {
+      free (opasswd_tmp);
+      return PAM_SUCCESS;
+    }
 
 #ifndef HELPER_COMPILE
   if (SELINUX_ENABLED)
-    return PAM_PWHISTORY_RUN_HELPER;
+    {
+      free (opasswd_tmp);
+      return PAM_PWHISTORY_RUN_HELPER;
+    }
 #endif
 
   if ((strcmp(pwd->pw_passwd, "x") == 0)  ||
@@ -291,14 +283,20 @@ save_old_pass, const char *user, int howmany, const char *filename, int debug UN
       struct spwd *spw = pam_modutil_getspnam (pamh, user);
 
       if (spw == NULL)
-        return PAM_USER_UNKNOWN;
+	{
+	  free (opasswd_tmp);
+	  return PAM_USER_UNKNOWN;
+	}
       oldpass = spw->sp_pwdp;
     }
   else
       oldpass = pwd->pw_passwd;
 
   if (oldpass == NULL || *oldpass == '\0')
-    return PAM_SUCCESS;
+    {
+      free (opasswd_tmp);
+      return PAM_SUCCESS;
+    }
 
   if ((oldpf = fopen (opasswd_file, "r")) == NULL)
     {
@@ -310,6 +308,7 @@ save_old_pass, const char *user, int howmany, const char *filename, int debug UN
       else
 	{
 	  pam_syslog (pamh, LOG_ERR, "Cannot open %s: %m", opasswd_file);
+	  free (opasswd_tmp);
 	  return PAM_AUTHTOK_ERR;
 	}
     }
@@ -317,6 +316,7 @@ save_old_pass, const char *user, int howmany, const char *filename, int debug UN
     {
       pam_syslog (pamh, LOG_ERR, "Cannot stat %s: %m", opasswd_file);
       fclose (oldpf);
+      free (opasswd_tmp);
       return PAM_AUTHTOK_ERR;
     }
 
@@ -328,6 +328,7 @@ save_old_pass, const char *user, int howmany, const char *filename, int debug UN
 		  opasswd_file);
       if (oldpf)
 	fclose (oldpf);
+      free (opasswd_tmp);
       return PAM_AUTHTOK_ERR;
     }
   if (do_create)
@@ -362,35 +363,12 @@ save_old_pass, const char *user, int howmany, const char *filename, int debug UN
   if (!do_create)
     while (!feof (oldpf))
       {
-	char *cp, *tmp, *save;
-#if defined(HAVE_GETLINE)
+	char *save;
 	ssize_t n = getline (&buf, &buflen, oldpf);
-#elif defined (HAVE_GETDELIM)
-	ssize_t n = getdelim (&buf, &buflen, '\n', oldpf);
-#else
-	ssize_t n;
-
-	if (buf == NULL)
-	  {
-	    buflen = DEFAULT_BUFLEN;
-	    buf = malloc (buflen);
-	    if (buf == NULL)
-              {
-		fclose (oldpf);
-		fclose (newpf);
-		retval = PAM_BUF_ERR;
-		goto error_opasswd;
-              }
-	  }
-	buf[0] = '\0';
-	fgets (buf, buflen - 1, oldpf);
-	n = strlen (buf);
-#endif /* HAVE_GETLINE / HAVE_GETDELIM */
 
 	if (n < 1)
 	  break;
 
-	cp = buf;
 	save = strdup (buf); /* Copy to write the original data back.  */
 	if (save == NULL)
           {
@@ -400,24 +378,17 @@ save_old_pass, const char *user, int howmany, const char *filename, int debug UN
 	    goto error_opasswd;
           }
 
-	tmp = strchr (cp, '#');  /* remove comments */
-	if (tmp)
-	  *tmp = '\0';
-	while (isspace ((int)*cp))    /* remove spaces and tabs */
-	  ++cp;
-	if (*cp == '\0')        /* ignore empty lines */
+	buf[strcspn(buf, "\n")] = '\0';
+	if (buf[0] == '\0')        /* ignore empty lines */
 	  goto write_old_data;
 
-	if (cp[strlen (cp) - 1] == '\n')
-	  cp[strlen (cp) - 1] = '\0';
-
-	if (strncmp (cp, user, strlen (user)) == 0 &&
-	    cp[strlen (user)] == ':')
+	if (strncmp (buf, user, strlen (user)) == 0 &&
+	    buf[strlen (user)] == ':')
 	  {
 	    /* We found the line we needed */
 	    opwd entry;
 
-	    if (parse_entry (cp, &entry) == 0)
+	    if (parse_entry (buf, &entry) == 0)
 	      {
 		char *out = NULL;
 
@@ -426,9 +397,9 @@ save_old_pass, const char *user, int howmany, const char *filename, int debug UN
 		/* Don't save the current password twice */
 		if (entry.old_passwords && entry.old_passwords[0] != '\0')
 		  {
-		    char *last = entry.old_passwords;
+		    char *cp = entry.old_passwords;
+		    char *last = cp;
 
-		    cp = entry.old_passwords;
 		    entry.count = 1;  /* Don't believe the count */
 		    while ((cp = strchr (cp, ',')) != NULL)
 		      {
@@ -446,7 +417,7 @@ save_old_pass, const char *user, int howmany, const char *filename, int debug UN
 		/* increase count.  */
 		entry.count++;
 
-		/* check that we don't remember to many passwords.  */
+		/* check that we don't remember too many passwords.  */
 		while (entry.count > howmany && entry.count > 1)
 		  {
 		    char *p = strpbrk (entry.old_passwords, ",");
@@ -561,9 +532,8 @@ save_old_pass, const char *user, int howmany, const char *filename, int debug UN
       goto error_opasswd;
     }
 
-  char opasswd_backup[PATH_MAX];
-  if ((size_t) snprintf (opasswd_backup, sizeof (opasswd_backup), "%s.old",
-			 opasswd_file) >= sizeof (opasswd_backup))
+  char *opasswd_backup;
+  if (asprintf (&opasswd_backup, "%s.old", opasswd_file) < 0)
     {
       retval = PAM_BUF_ERR;
       goto error_opasswd;
@@ -575,8 +545,10 @@ save_old_pass, const char *user, int howmany, const char *filename, int debug UN
     pam_syslog (pamh, LOG_ERR, "Cannot create backup file of %s: %m",
 		opasswd_file);
   rename (opasswd_tmp, opasswd_file);
+  free (opasswd_backup);
  error_opasswd:
   unlink (opasswd_tmp);
+  free (opasswd_tmp);
   pam_overwrite_n(buf, buflen);
   free (buf);
 

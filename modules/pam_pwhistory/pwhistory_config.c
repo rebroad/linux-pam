@@ -46,10 +46,10 @@
 #include "pam_inline.h"
 #include "pwhistory_config.h"
 
-#define PWHISTORY_DEFAULT_CONF SCONFIGDIR "/pwhistory.conf"
+#define PWHISTORY_DEFAULT_CONF SCONFIG_DIR "/pwhistory.conf"
 
-#ifdef VENDOR_SCONFIGDIR
-#define VENDOR_PWHISTORY_DEFAULT_CONF (VENDOR_SCONFIGDIR "/pwhistory.conf")
+#ifdef VENDOR_SCONFIG_DIR
+#define VENDOR_PWHISTORY_DEFAULT_CONF (VENDOR_SCONFIG_DIR "/pwhistory.conf")
 #endif
 
 void
@@ -124,6 +124,7 @@ parse_config_file(pam_handle_t *pamh, int argc, const char **argv,
         if (*val != '/') {
             pam_syslog (pamh, LOG_ERR,
                 "File path should be absolute: %s", val);
+            free(val);
         } else {
             options->filename = val;
         }

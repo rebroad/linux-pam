@@ -57,6 +57,7 @@
 #include <security/pam_modutil.h>
 #include <security/pam_ext.h>
 #include "pam_inline.h"
+#include "pam_i18n.h"
 
 #include <selinux/selinux.h>
 #include <selinux/get_context_list.h>
@@ -97,7 +98,7 @@ send_audit_message(const pam_handle_t *pamh, int success, const char *default_co
 		pam_syslog(pamh, LOG_ERR, "Error translating selected context '%s'.", selected_context);
 		selected_raw = NULL;
 	}
-	if (asprintf(&msg, "pam: default-context=%s selected-context=%s",
+	if (asprintf(&msg, "op=pam_selinux default-context=%s selected-context=%s",
 		     default_raw ? default_raw : (default_context ? default_context : "?"),
 		     selected_raw ? selected_raw : (selected_context ? selected_context : "?")) < 0) {
 		msg = NULL; /* asprintf leaves msg in undefined state on failure */
@@ -114,7 +115,8 @@ send_audit_message(const pam_handle_t *pamh, int success, const char *default_co
       fallback:
 #endif /* HAVE_LIBAUDIT */
         pam_syslog(pamh, LOG_NOTICE, "pam: default-context=%s selected-context=%s success %d",
-		   default_context, selected_context, success);
+		   default_context ? default_context : "(null)",
+		   selected_context ? selected_context : "(null)", success);
 
 #ifdef HAVE_LIBAUDIT
       cleanup:

@@ -8,6 +8,7 @@
 
 #include "config.h"
 
+#include <limits.h>
 #include <pwd.h>
 #include <stdarg.h>
 #include <string.h>
@@ -18,7 +19,7 @@
 #include <syslog.h>
 #include <unistd.h>
 #if defined (USE_ECONF)	&& defined (VENDORDIR)
-#include <libeconf.h>
+#include "pam_econf.h"
 #endif
 
 #include <security/pam_modules.h>
@@ -61,8 +62,16 @@ static int perform_check(pam_handle_t *pamh)
     }
 
     pw = pam_modutil_getpwnam(pamh, userName);
-    if (pw == NULL || pw->pw_shell == NULL) {
-	return PAM_AUTH_ERR;		/* user doesn't exist */
+    if (pw == NULL) {
+	return PAM_USER_UNKNOWN;
+    }
+    if (pw->pw_shell == NULL) {
+	/* TODO: when does this happen? I would join it with
+	 * the case userShell[0] == '\0' below.
+	 *
+	 * For now, keep the existing stricter behaviour
+	 */
+	return PAM_AUTH_ERR;
     }
     userShell = pw->pw_shell;
     if (userShell[0] == '\0')
@@ -72,17 +81,17 @@ static int perform_check(pam_handle_t *pamh)
     size_t size = 0;
     econf_err error;
     char **keys;
-    econf_file *key_file;
+    econf_file *key_file = NULL;
 
-    error = econf_readDirsWithCallback(&key_file,
-				       VENDORDIR,
-				       ETCDIR,
-				       SHELLS,
-				       NULL,
-				       "", /* key only */
-				       "#", /* comment */
-				       check_file, pamh);
-    if (error) {
+    error = pam_econf_readconfig(&key_file,
+				 VENDORDIR,
+				 ETCDIR,
+				 SHELLS,
+				 NULL,
+				 "", /* key only */
+				 "#", /* comment */
+				 check_file, pamh);
+    if (error != ECONF_SUCCESS) {
 	pam_syslog(pamh, LOG_ERR,
 		   "Cannot parse shell files: %s",
 		   econf_errString(error));
@@ -104,10 +113,12 @@ static int perform_check(pam_handle_t *pamh)
         if (!retval)
 	   break;
     }
+    econf_free (keys);
     econf_free (key_file);
 #else
-    char shellFileLine[256];
-    FILE * shellFile;
+    FILE *shellFile;
+    char *p = NULL;
+    size_t n = 0;
 
     if (!check_file(SHELL_FILE, pamh))
         return PAM_AUTH_ERR;
@@ -120,16 +131,21 @@ static int perform_check(pam_handle_t *pamh)
 
     retval = 1;
 
-    while(retval && (fgets(shellFileLine, 255, shellFile) != NULL)) {
-	if (shellFileLine[strlen(shellFileLine) - 1] == '\n')
-	    shellFileLine[strlen(shellFileLine) - 1] = '\0';
-	retval = strcmp(shellFileLine, userShell);
+    while (retval && getline(&p, &n, shellFile) != -1) {
+	p[strcspn(p, "\n")] = '\0';
+
+	if (p[0] != '/') {
+		continue;
+	}
+	retval = strcmp(p, userShell);
     }
 
+    free(p);
     fclose(shellFile);
- #endif
+#endif
 
     if (retval) {
+	pam_syslog(pamh, LOG_NOTICE, "User has an invalid shell '%s'", userShell);
 	return PAM_AUTH_ERR;
     } else {
 	return PAM_SUCCESS;
