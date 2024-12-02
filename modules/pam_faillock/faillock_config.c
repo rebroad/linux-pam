@@ -48,9 +48,9 @@
 #include "faillock_config.h"
 #include "faillock.h"
 
-#define FAILLOCK_DEFAULT_CONF SCONFIGDIR "/faillock.conf"
-#ifdef VENDOR_SCONFIGDIR
-#define VENDOR_FAILLOCK_DEFAULT_CONF VENDOR_SCONFIGDIR "/faillock.conf"
+#define FAILLOCK_DEFAULT_CONF SCONFIG_DIR "/faillock.conf"
+#ifdef VENDOR_SCONFIG_DIR
+#define VENDOR_FAILLOCK_DEFAULT_CONF VENDOR_SCONFIG_DIR "/faillock.conf"
 #endif
 
 static void PAM_FORMAT((printf, 3, 4)) PAM_NONNULL((3))
@@ -79,7 +79,8 @@ config_log(const pam_handle_t *pamh, int priority, const char *fmt, ...)
 int
 read_config_file(pam_handle_t *pamh, struct options *opts, const char *cfgfile)
 {
-	char linebuf[FAILLOCK_CONF_MAX_LINELEN+1];
+	char *linebuf = NULL;
+	size_t n = 0;
 	const char *fname = (cfgfile != NULL) ? cfgfile : FAILLOCK_DEFAULT_CONF;
 	FILE *f = fopen(fname, "r");
 
@@ -100,15 +101,15 @@ read_config_file(pam_handle_t *pamh, struct options *opts, const char *cfgfile)
 		return PAM_SERVICE_ERR;
 	}
 
-	while (fgets(linebuf, sizeof(linebuf), f) != NULL) {
+	while (getline(&linebuf, &n, f) != -1) {
 		size_t len;
 		char *ptr;
 		char *name;
 		int eq;
 
 		len = strlen(linebuf);
-		/* len cannot be 0 unless there is a bug in fgets */
 		if (len && linebuf[len - 1] != '\n' && !feof(f)) {
+			free(linebuf);
 			(void) fclose(f);
 			return PAM_SERVICE_ERR;
 		}
@@ -121,7 +122,7 @@ read_config_file(pam_handle_t *pamh, struct options *opts, const char *cfgfile)
 
 		/* drop terminating whitespace including the \n */
 		while (ptr > linebuf) {
-			if (!isspace(*(ptr-1))) {
+			if (!isspace((unsigned char)*(ptr-1))) {
 				*ptr = '\0';
 				break;
 			}
@@ -129,7 +130,7 @@ read_config_file(pam_handle_t *pamh, struct options *opts, const char *cfgfile)
 		}
 
 		/* skip initial whitespace */
-		for (ptr = linebuf; isspace(*ptr); ptr++);
+		for (ptr = linebuf; isspace((unsigned char)*ptr); ptr++);
 		if (*ptr == '\0')
 			continue;
 
@@ -137,7 +138,7 @@ read_config_file(pam_handle_t *pamh, struct options *opts, const char *cfgfile)
 		eq = 0;
 		name = ptr;
 		while (*ptr != '\0') {
-			if (isspace(*ptr) || *ptr == '=') {
+			if (isspace((unsigned char)*ptr) || *ptr == '=') {
 				eq = *ptr == '=';
 				*ptr = '\0';
 				++ptr;
@@ -149,7 +150,7 @@ read_config_file(pam_handle_t *pamh, struct options *opts, const char *cfgfile)
 		/* grab the key value */
 		while (*ptr != '\0') {
 			if (*ptr != '=' || eq) {
-				if (!isspace(*ptr)) {
+				if (!isspace((unsigned char)*ptr)) {
 					break;
 				}
 			} else {
@@ -162,6 +163,7 @@ read_config_file(pam_handle_t *pamh, struct options *opts, const char *cfgfile)
 		set_conf_opt(pamh, opts, name, ptr);
 	}
 
+	free(linebuf);
 	(void)fclose(f);
 	return PAM_SUCCESS;
 }

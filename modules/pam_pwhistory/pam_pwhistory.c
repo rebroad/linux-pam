@@ -37,9 +37,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if defined(HAVE_CONFIG_H)
 #include <config.h>
-#endif
 
 #include <pwd.h>
 #include <errno.h>
@@ -63,6 +61,7 @@
 
 #include "opasswd.h"
 #include "pam_inline.h"
+#include "pam_i18n.h"
 #include "pwhistory_config.h"
 
 
@@ -112,6 +111,7 @@ parse_option (pam_handle_t *pamh, const char *argv, options_t *options)
     pam_syslog (pamh, LOG_ERR, "pam_pwhistory: unknown option: %s", argv);
 }
 
+#ifdef WITH_SELINUX
 static int
 run_save_helper(pam_handle_t *pamh, const char *user,
 		int howmany, const char *filename, int debug)
@@ -141,7 +141,7 @@ run_save_helper(pam_handle_t *pamh, const char *user,
       args[0] = (char *)PWHISTORY_HELPER;
       args[1] = (char *)"save";
       args[2] = (char *)user;
-      args[3] = (char *)filename;
+      args[3] = (char *)((filename != NULL) ? filename : "");
       DIAG_POP_IGNORE_CAST_QUAL;
       if (asprintf(&args[4], "%d", howmany) < 0 ||
           asprintf(&args[5], "%d", debug) < 0)
@@ -228,7 +228,7 @@ run_check_helper(pam_handle_t *pamh, const char *user,
       args[0] = (char *)PWHISTORY_HELPER;
       args[1] = (char *)"check";
       args[2] = (char *)user;
-      args[3] = (char *)filename;
+      args[3] = (char *)((filename != NULL) ? filename : "");
       DIAG_POP_IGNORE_CAST_QUAL;
       if (asprintf(&args[4], "%d", debug) < 0)
         {
@@ -287,6 +287,7 @@ run_check_helper(pam_handle_t *pamh, const char *user,
 
   return retval;
 }
+#endif
 
 /* This module saves the current hashed password in /etc/security/opasswd
    and then compares the new password with all entries in this file. */
@@ -332,8 +333,10 @@ pam_sm_chauthtok (pam_handle_t *pamh, int flags, int argc, const char **argv)
 
   retval = save_old_pass (pamh, user, options.remember, options.filename, options.debug);
 
+#ifdef WITH_SELINUX
   if (retval == PAM_PWHISTORY_RUN_HELPER)
       retval = run_save_helper(pamh, user, options.remember, options.filename, options.debug);
+#endif
 
   if (retval != PAM_SUCCESS)
     return retval;
@@ -366,8 +369,10 @@ pam_sm_chauthtok (pam_handle_t *pamh, int flags, int argc, const char **argv)
 	pam_syslog (pamh, LOG_DEBUG, "check against old password file");
 
       retval = check_old_pass (pamh, user, newpass, options.filename, options.debug);
+#ifdef WITH_SELINUX
       if (retval == PAM_PWHISTORY_RUN_HELPER)
 	  retval = run_check_helper(pamh, user, newpass, options.filename, options.debug);
+#endif
 
       if (retval != PAM_SUCCESS)
 	{

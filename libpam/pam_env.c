@@ -14,6 +14,7 @@
 #include "pam_inline.h"
 
 #include <string.h>
+#include <stdint.h>
 #include <stdlib.h>
 
 #ifdef sunos
@@ -33,7 +34,12 @@ static void _pam_dump_env(pam_handle_t *pamh)
        , pamh->env->requested, pamh->env->entries));
 
     for (i=0; i<pamh->env->requested; ++i) {
-	_pam_output_debug(">%-3d [%9p]:[%s]"
+	_pam_output_debug(
+#if UINTPTR_MAX == UINT32_MAX
+			  ">%-3d [%10p]:[%s]"
+#else
+			  ">%-3d [%18p]:[%s]"
+#endif
 			  , i, pamh->env->list[i], pamh->env->list[i]);
     }
     _pam_output_debug("*NOTE* the last item should be (nil)");
@@ -50,13 +56,13 @@ int _pam_make_env(pam_handle_t *pamh)
 {
     D(("called."));
 
-    IF_NO_PAMH("_pam_make_env", pamh, PAM_ABORT);
+    IF_NO_PAMH(pamh, PAM_ABORT);
 
     /*
      * get structure memory
      */
 
-    pamh->env = (struct pam_environ *) malloc(sizeof(struct pam_environ));
+    pamh->env = malloc(sizeof(struct pam_environ));
     if (pamh->env == NULL) {
 	pam_syslog(pamh, LOG_CRIT, "_pam_make_env: out of memory");
 	return PAM_BUF_ERR;
@@ -66,7 +72,7 @@ int _pam_make_env(pam_handle_t *pamh)
      * get list memory
      */
 
-    pamh->env->list = (char **)calloc( PAM_ENV_CHUNK, sizeof(char *) );
+    pamh->env->list = calloc( PAM_ENV_CHUNK, sizeof(char *) );
     if (pamh->env->list == NULL) {
 	pam_syslog(pamh, LOG_CRIT, "_pam_make_env: no memory for list");
 	_pam_drop(pamh->env);
@@ -93,7 +99,7 @@ int _pam_make_env(pam_handle_t *pamh)
 void _pam_drop_env(pam_handle_t *pamh)
 {
     D(("called."));
-    IF_NO_PAMH("_pam_make_env", pamh, /* nothing to return */);
+    IF_NO_PAMH(pamh, /* nothing to return */);
 
     if (pamh->env != NULL) {
 	int i;
@@ -120,7 +126,7 @@ void _pam_drop_env(pam_handle_t *pamh)
  */
 
 static int _pam_search_env(const struct pam_environ *env
-			   , const char *name_value, int length)
+			   , const char *name_value, size_t length)
 {
     int i;
 
@@ -152,10 +158,11 @@ static int _pam_search_env(const struct pam_environ *env
 
 int pam_putenv(pam_handle_t *pamh, const char *name_value)
 {
-    int l2eq, item, retval;
+    size_t l2eq;
+    int item, retval;
 
     D(("called."));
-    IF_NO_PAMH("pam_putenv", pamh, PAM_ABORT);
+    IF_NO_PAMH(pamh, PAM_ABORT);
 
     if (name_value == NULL) {
 	pam_syslog(pamh, LOG_ERR, "pam_putenv: no variable indicated");
@@ -167,7 +174,7 @@ int pam_putenv(pam_handle_t *pamh, const char *name_value)
      */
 
     for (l2eq=0; name_value[l2eq] && name_value[l2eq] != '='; ++l2eq);
-    if (l2eq <= 0) {
+    if (l2eq == 0) {
 	pam_syslog(pamh, LOG_ERR, "pam_putenv: bad variable");
 	return PAM_BAD_ITEM;
     }
@@ -265,7 +272,7 @@ int pam_putenv(pam_handle_t *pamh, const char *name_value)
     pam_overwrite_string(pamh->env->list[item]);
     _pam_drop(pamh->env->list[item]);
     --(pamh->env->requested);
-    D(("mmove: item[%d]+%d -> item[%d]"
+    D(("memmove: item[%d]+%d -> item[%d]"
        , item+1, ( pamh->env->requested - item ), item));
     (void) memmove(&pamh->env->list[item], &pamh->env->list[item+1]
 		   , ( pamh->env->requested - item )*sizeof(char *) );
@@ -288,7 +295,7 @@ const char *pam_getenv(pam_handle_t *pamh, const char *name)
     int item;
 
     D(("called."));
-    IF_NO_PAMH("pam_getenv", pamh, NULL);
+    IF_NO_PAMH(pamh, NULL);
 
     if (name == NULL) {
 	pam_syslog(pamh, LOG_ERR, "pam_getenv: no variable indicated");
@@ -326,7 +333,7 @@ static char **_copy_env(pam_handle_t *pamh)
     D(("now get some memory for dump"));
 
     /* allocate some memory for this (plus the null tail-pointer) */
-    dump = (char **) calloc(i, sizeof(char *));
+    dump = calloc(i, sizeof(char *));
     D(("dump = %p", dump));
     if (dump == NULL) {
 	return NULL;
@@ -361,7 +368,7 @@ char **pam_getenvlist(pam_handle_t *pamh)
     int i;
 
     D(("called."));
-    IF_NO_PAMH("pam_getenvlist", pamh, NULL);
+    IF_NO_PAMH(pamh, NULL);
 
     if (pamh->env == NULL || pamh->env->list == NULL) {
 	pam_syslog(pamh, LOG_ERR, "pam_getenvlist: no env%s found",

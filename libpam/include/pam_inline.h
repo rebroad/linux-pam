@@ -45,6 +45,26 @@
 #define PAM_ARRAY_SIZE(a_)		(sizeof(a_) / sizeof((a_)[0]) + PAM_MUST_BE_ARRAY(a_))
 
 /*
+ * Zero-extend a signed integer type to unsigned long long.
+ */
+# define zero_extend_signed_to_ull(v_) \
+	(sizeof(v_) == sizeof(char) ? (unsigned long long) (unsigned char) (v_) : \
+	 sizeof(v_) == sizeof(short) ? (unsigned long long) (unsigned short) (v_) : \
+	 sizeof(v_) == sizeof(int) ? (unsigned long long) (unsigned int) (v_) : \
+	 sizeof(v_) == sizeof(long) ? (unsigned long long) (unsigned long) (v_) : \
+	 (unsigned long long) (v_))
+
+/*
+ * Sign-extend an unsigned integer type to long long.
+ */
+# define sign_extend_unsigned_to_ll(v_) \
+	(sizeof(v_) == sizeof(char) ? (long long) (signed char) (v_) : \
+	 sizeof(v_) == sizeof(short) ? (long long) (signed short) (v_) : \
+	 sizeof(v_) == sizeof(int) ? (long long) (signed int) (v_) : \
+	 sizeof(v_) == sizeof(long) ? (long long) (signed long) (v_) : \
+	 (long long) (v_))
+
+/*
  * Returns NULL if STR does not start with PREFIX,
  * or a pointer to the first char in STR after PREFIX.
  * The length of PREFIX is specified by PREFIX_LEN.
@@ -82,7 +102,7 @@ pam_str_skip_icase_prefix_len(const char *str, const char *prefix, size_t prefix
 static inline void pam_overwrite_n(void *ptr, size_t len)
 {
 	if (ptr)
-		memset_explicit(ptr, len);
+		memset_explicit(ptr, '\0', len);
 }
 #elif defined HAVE_EXPLICIT_BZERO
 static inline void pam_overwrite_n(void *ptr, size_t len)
@@ -173,6 +193,20 @@ pam_read_passwords(int fd, int npass, char **passwords)
 	}
 
 	return i;
+}
+
+static inline int
+pam_consttime_streq(const char *userinput, const char *secret) {
+	volatile const char *u = userinput, *s = secret;
+	volatile int ret = 0;
+
+	do {
+		ret |= *u ^ *s;
+
+		s += !!*s;
+	} while (*u++ != '\0');
+
+	return ret == 0;
 }
 
 #endif /* PAM_INLINE_H */

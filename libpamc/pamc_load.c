@@ -224,14 +224,13 @@ int pamc_disable(pamc_handle_t pch, const char *agent_id)
 	return PAM_BPC_FALSE;
     }
 
-    block->id =	malloc(1 + strlen(agent_id));
+    block->id =	strdup(agent_id);
     if (block->id == NULL) {
 	D(("no memory for agent id"));
 	free(block);
 	return PAM_BPC_FALSE;
     }
 
-    strcpy(block->id, agent_id);
     block->next = pch->blocked_agents;
     pch->blocked_agents = block;
 
@@ -245,9 +244,9 @@ int pamc_disable(pamc_handle_t pch, const char *agent_id)
 int pamc_load(pamc_handle_t pch, const char *agent_id)
 {
     pamc_agent_t *agent;
-    int length;
+    size_t length;
 
-    /* santity checking */
+    /* sanity checking */
 
     if (pch == NULL) {
 	D(("pch is NULL"));
@@ -324,7 +323,7 @@ int __pamc_valid_agent_id(int id_length, const char *id)
     for (i=post=0 ; i < id_length; ++i) {
 	int ch = id[i++];
 
-	if (isalpha(ch) || isdigit(ch) || (ch == '_')) {
+	if (isalpha((unsigned char)ch) || isdigit((unsigned char)ch) || (ch == '_')) {
 	    continue;
 	} else if (post && (ch == '.')) {
 	    continue;
@@ -372,10 +371,8 @@ static pamc_id_node_t *__pamc_add_node(pamc_id_node_t *root, const char *id,
 	pamc_id_node_t *node = calloc(1, sizeof(pamc_id_node_t));
 
 	if (node) {
-	    node->agent_id = malloc(1+strlen(id));
-	    if (node->agent_id) {
-		strcpy(node->agent_id, id);
-	    } else {
+	    node->agent_id = strdup(id);
+	    if (node->agent_id == NULL) {
 		free(node);
 		node = NULL;
 	    }
@@ -393,10 +390,8 @@ static pamc_id_node_t *__pamc_add_node(pamc_id_node_t *root, const char *id,
 static pamc_id_node_t *__pamc_liberate_nodes(pamc_id_node_t *tree)
 {
     if (tree) {
-	if (tree->agent_id) {
-	    free(tree->agent_id);
-	    tree->agent_id = NULL;
-	}
+	free(tree->agent_id);
+	tree->agent_id = NULL;
 
 	tree->left = __pamc_liberate_nodes(tree->left);
 	tree->right = __pamc_liberate_nodes(tree->right);

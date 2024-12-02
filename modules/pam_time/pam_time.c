@@ -33,9 +33,9 @@
 #include <libaudit.h>
 #endif
 
-#define PAM_TIME_CONF	(SCONFIGDIR "/time.conf")
-#ifdef VENDOR_SCONFIGDIR
-#define VENDOR_PAM_TIME_CONF (VENDOR_SCONFIGDIR "/time.conf")
+#define PAM_TIME_CONF	(SCONFIG_DIR "/time.conf")
+#ifdef VENDOR_SCONFIG_DIR
+#define VENDOR_PAM_TIME_CONF (VENDOR_SCONFIG_DIR "/time.conf")
 #endif
 
 #define PAM_TIME_BUFLEN        1000
@@ -139,7 +139,7 @@ read_field(const pam_handle_t *pamh, int fd, char **buf, int *from, int *state, 
 
     /* is buf set ? */
     if (! *buf) {
-	*buf = (char *) calloc(1, PAM_TIME_BUFLEN+1);
+	*buf = calloc(1, PAM_TIME_BUFLEN+1);
 	if (! *buf) {
 	    pam_syslog(pamh, LOG_CRIT, "out of memory");
 	    D(("no memory"));
@@ -286,7 +286,7 @@ logic_member(const char *string, int *at)
 	       break;
 
 	  default:
-	       if (isalpha(c) || c == '*' || isdigit(c) || c == '_'
+	       if (isalpha((unsigned char)c) || c == '*' || isdigit((unsigned char)c) || c == '_'
 		    || c == '-' || c == '.' || c == '/' || c == ':') {
 		    token = 1;
 	       } else if (token) {
@@ -319,7 +319,7 @@ logic_field(pam_handle_t *pamh, const void *me, const char *x, int rule,
 	  if (next == VAL) {
 	       if (c == '!')
 		    not = !not;
-	       else if (isalpha(c) || c == '*' || isdigit(c) || c == '_'
+	       else if (isalpha((unsigned char)c) || c == '*' || isdigit((unsigned char)c) || c == '_'
                     || c == '-' || c == '.' || c == '/' || c == ':') {
 		    right = not ^ agrees(pamh, me, x+at, l, rule);
 		    if (oper == AND)
@@ -432,7 +432,7 @@ check_time(pam_handle_t *pamh, const void *AT, const char *times,
      int i,j=0;
 
      at = AT;
-     D(("chcking: 0%o/%.4d vs. %s", at->day, at->minute, times));
+     D(("checking: 0%o/%.4d vs. %s", at->day, at->minute, times));
 
      if (times == NULL) {
 	  /* this should not happen */
@@ -449,13 +449,13 @@ check_time(pam_handle_t *pamh, const void *AT, const char *times,
 	  not = FALSE;
      }
 
-     for (marked_day = 0; len > 0 && isalpha(times[j]); --len) {
+     for (marked_day = 0; len > 0 && isalpha((unsigned char)times[j]); --len) {
 	  int this_day=-1;
 
 	  D(("%c%c ?", times[j], times[j+1]));
 	  for (i=0; days[i].d != NULL; ++i) {
-	       if (tolower(times[j]) == days[i].d[0]
-		   && tolower(times[j+1]) == days[i].d[1] ) {
+	       if (tolower((unsigned char)times[j]) == days[i].d[0]
+		   && tolower((unsigned char)times[j+1]) == days[i].d[1] ) {
 		    this_day = days[i].bit;
 		    break;
 	       }
@@ -474,7 +474,7 @@ check_time(pam_handle_t *pamh, const void *AT, const char *times,
      D(("day range = 0%o", marked_day));
 
      time_start = 0;
-     for (i=0; len > 0 && i < 4 && isdigit(times[i+j]); ++i, --len) {
+     for (i=0; len > 0 && i < 4 && isdigit((unsigned char)times[i+j]); ++i, --len) {
 	  time_start *= 10;
 	  time_start += times[i+j]-'0';        /* is this portable? */
      }
@@ -482,7 +482,7 @@ check_time(pam_handle_t *pamh, const void *AT, const char *times,
 
      if (times[j] == '-') {
 	  time_end = 0;
-	  for (i=1; len > 0 && i < 5 && isdigit(times[i+j]); ++i, --len) {
+	  for (i=1; len > 0 && i < 5 && isdigit((unsigned char)times[i+j]); ++i, --len) {
 	       time_end *= 10;
 	       time_end += times[i+j]-'0';    /* is this portable */
 	  }
@@ -674,7 +674,7 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags UNUSED,
 
     /* good, now we have the service name, the user and the terminal name */
 
-    D(("service=%s", service));
+    D(("service=%s", (const char *) service));
     D(("user=%s", user));
     D(("tty=%s", tty));
 
