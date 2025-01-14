@@ -15,10 +15,10 @@ Upstream status: submitted in <20070830171918.GB30563@dario.dodds.net>
  1 file changed, 2 insertions(+)
 
 diff --git a/modules/pam_limits/pam_limits.c b/modules/pam_limits/pam_limits.c
-index a58d424..746c441 100644
+index 2603028..be0b637 100644
 --- a/modules/pam_limits/pam_limits.c
 +++ b/modules/pam_limits/pam_limits.c
-@@ -1124,6 +1124,8 @@ static int setup_limits(pam_handle_t *pamh,
+@@ -1263,6 +1263,8 @@ static int setup_limits(pam_handle_t *pamh,
  	if (res != 0)
  	  pam_syslog(pamh, LOG_ERR, "Could not set limit for '%s': %m",
  		     rlimit2str(i));

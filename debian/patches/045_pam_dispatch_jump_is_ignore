@@ -11,7 +11,7 @@ to be consistent.
  1 file changed, 1 insertion(+), 16 deletions(-)
 
 diff --git a/libpam/pam_dispatch.c b/libpam/pam_dispatch.c
-index 974104a..15cad01 100644
+index 3a1d59e..b341774 100644
 --- a/libpam/pam_dispatch.c
 +++ b/libpam/pam_dispatch.c
 @@ -260,22 +260,7 @@ static int _pam_dispatch_aux(pam_handle_t *pamh, int flags, struct handler *h,

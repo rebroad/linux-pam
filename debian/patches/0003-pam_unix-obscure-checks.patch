@@ -3,85 +3,33 @@ Date: Mon, 11 Sep 2023 14:00:42 -0600
 Subject: pam_unix: obscure checks
 
 * Bring in the obscure checks that used to live in shadow so we can still support them
-
-* Set default minimum password length to 6
 ---
- modules/pam_unix/Makefile.am       |   2 +-
- modules/pam_unix/README            |  36 ++++++-
- modules/pam_unix/obscure.c         | 198 +++++++++++++++++++++++++++++++++++++
- modules/pam_unix/pam_unix.8        |  33 ++++++-
- modules/pam_unix/pam_unix.8.xml    |  77 ++++++++++++++-
+ modules/module-meson.build         |   1 +
+ modules/pam_unix/obscure.c         | 199 +++++++++++++++++++++++++++++++++++++
+ modules/pam_unix/pam_unix.8.xml    |  75 +++++++++++++-
  modules/pam_unix/pam_unix_passwd.c |  10 +-
- modules/pam_unix/support.h         |  78 ++++++++-------
- 7 files changed, 389 insertions(+), 45 deletions(-)
+ modules/pam_unix/support.h         |  79 ++++++++-------
+ 5 files changed, 324 insertions(+), 40 deletions(-)
  create mode 100644 modules/pam_unix/obscure.c
 
-diff --git a/modules/pam_unix/Makefile.am b/modules/pam_unix/Makefile.am
-index a1dfe44..ddba63c 100644
---- a/modules/pam_unix/Makefile.am
-+++ b/modules/pam_unix/Makefile.am
-@@ -43,7 +43,7 @@ noinst_PROGRAMS = bigcrypt
- 
- pam_unix_la_SOURCES = bigcrypt.c pam_unix_acct.c \
- 	pam_unix_auth.c pam_unix_passwd.c pam_unix_sess.c support.c \
--	passverify.c md5_good.c md5_broken.c
-+	passverify.c md5_good.c md5_broken.c obscure.c
- if HAVE_NIS
-   pam_unix_la_SOURCES += yppasswd_xdr.c
- endif
-diff --git a/modules/pam_unix/README b/modules/pam_unix/README
-index 67a2d21..be11095 100644
---- a/modules/pam_unix/README
-+++ b/modules/pam_unix/README
-@@ -171,8 +171,40 @@ broken_shadow
- 
- minlen=n
- 
--    Set a minimum password length of n characters. The max. for DES crypt based
--    passwords are 8 characters.
-+    Set a minimum password length of n characters. The default value is 6. The
-+    maximum for DES crypt-based passwords is 8 characters.
-+
-+obscure
-+
-+    Enable some extra checks on password strength. These checks are based on
-+    the "obscure" checks in the original shadow package. The behavior is
-+    similar to the pam_cracklib module, but for non-dictionary-based checks.
-+    The following checks are implemented:
-+
-+    Palindrome
-+
-+        Verifies that the new password is not a palindrome of (i.e., the
-+        reverse of) the previous one.
-+
-+    Case Change Only
-+
-+        Verifies that the new password isn't the same as the old one with a
-+        change of case.
-+
-+    Similar
-+
-+        Verifies that the new password isn't too much like the previous one.
-+
-+    Simple
-+
-+        Is the new password too simple? This is based on the length of the
-+        password and the number of different types of characters (alpha,
-+        numeric, etc.) used.
-+
-+    Rotated
-+
-+        Is the new password a rotated version of the old password? (E.g.,
-+        "billy" and "illyb")
- 
- no_pass_expiry
- 
+diff --git a/modules/module-meson.build b/modules/module-meson.build
+index d55dad2..edf9d57 100644
+--- a/modules/module-meson.build
++++ b/modules/module-meson.build
+@@ -106,6 +106,7 @@ if module == 'pam_unix'
+                     'pam_unix_auth.c',
+                     'pam_unix_passwd.c',
+                     'pam_unix_sess.c',
++                    'obscure.c',
+                     'support.c',
+                     'passverify.c',
+                     'md5_good.c',
 diff --git a/modules/pam_unix/obscure.c b/modules/pam_unix/obscure.c
 new file mode 100644
-index 0000000..2ffac92
+index 0000000..9dbbe6e
 --- /dev/null
 +++ b/modules/pam_unix/obscure.c
-@@ -0,0 +1,198 @@
+@@ -0,0 +1,199 @@
 +/*
 + * Copyright 1989 - 1994, Julianne Frances Haugh
 + * All rights reserved.
@@ -123,6 +71,7 @@ index 0000000..2ffac92
 +#include <security/_pam_macros.h>
 +
 +
++#include "pam_i18n.h"
 +#include "support.h"
 +
 +/* can't be a palindrome - like `R A D A R' or `M A D A M' */
@@ -280,65 +229,14 @@ index 0000000..2ffac92
 +
 +	return msg;
 +}
-diff --git a/modules/pam_unix/pam_unix.8 b/modules/pam_unix/pam_unix.8
-index 438717f..6f5f19b 100644
---- a/modules/pam_unix/pam_unix.8
-+++ b/modules/pam_unix/pam_unix.8
-@@ -216,7 +216,38 @@ minlen=n
- .RS 4
- Set a minimum password length of
- \fIn\fR
--characters\&. The max\&. for DES crypt based passwords are 8 characters\&.
-+characters\&. The default value is 6\&. The maximum for DES crypt\-based passwords is 8 characters\&.
-+.RE
-+.PP
-+\fBobscure\fR
-+.RS 4
-+Enable some extra checks on password strength\&. These checks are based on the "obscure" checks in the original shadow package\&. The behavior is similar to the pam_cracklib module, but for non\-dictionary\-based checks\&. The following checks are implemented:
-+.PP
-+\fBPalindrome\fR
-+.RS 4
-+Verifies that the new password is not a palindrome of (i\&.e\&., the reverse of) the previous one\&.
-+.RE
-+.PP
-+\fBCase Change Only\fR
-+.RS 4
-+Verifies that the new password isn\*(Aqt the same as the old one with a change of case\&.
-+.RE
-+.PP
-+\fBSimilar\fR
-+.RS 4
-+Verifies that the new password isn\*(Aqt too much like the previous one\&.
-+.RE
-+.PP
-+\fBSimple\fR
-+.RS 4
-+Is the new password too simple? This is based on the length of the password and the number of different types of characters (alpha, numeric, etc\&.) used\&.
-+.RE
-+.PP
-+\fBRotated\fR
-+.RS 4
-+Is the new password a rotated version of the old password? (E\&.g\&., "billy" and "illyb")
-+.RE
-+.sp
- .RE
- .PP
- no_pass_expiry
 diff --git a/modules/pam_unix/pam_unix.8.xml b/modules/pam_unix/pam_unix.8.xml
-index dfc0427..4e63a49 100644
+index d2cd198..d02320b 100644
 --- a/modules/pam_unix/pam_unix.8.xml
 +++ b/modules/pam_unix/pam_unix.8.xml
-@@ -397,8 +397,81 @@
-         <listitem>
-           <para>
-             Set a minimum password length of <replaceable>n</replaceable>
--            characters. The max. for DES crypt based passwords are 8
--            characters.
-+            characters.  The default value is 6.  The maximum for DES
-+            crypt-based passwords is 8 characters.
-+          </para>
-+        </listitem>
-+      </varlistentry>
+@@ -402,6 +402,79 @@
+           </para>
+         </listitem>
+       </varlistentry>
 +      <varlistentry>
 +        <term>
 +          <option>obscure</option>
@@ -409,14 +307,24 @@ index dfc0427..4e63a49 100644
 +                </listitem>
 +              </varlistentry>
 +            </variablelist>
-           </para>
-         </listitem>
-       </varlistentry>
++          </para>
++        </listitem>
++      </varlistentry>
+       <varlistentry>
+         <term>
+           no_pass_expiry
+@@ -495,4 +568,4 @@ session    required   pam_unix.so
+       </para>
+   </refsect1>
+ 
+-</refentry>
+\ No newline at end of file
++</refentry>
 diff --git a/modules/pam_unix/pam_unix_passwd.c b/modules/pam_unix/pam_unix_passwd.c
-index c341741..652f3c5 100644
+index 4a3784a..ea941fe 100644
 --- a/modules/pam_unix/pam_unix_passwd.c
 +++ b/modules/pam_unix/pam_unix_passwd.c
-@@ -86,6 +86,9 @@ extern int getrpcport(const char *host, unsigned long prognum,
+@@ -87,6 +87,9 @@ extern int getrpcport(const char *host, unsigned long prognum,
  # endif				/* GNU libc 2.1 */
  #endif
  
@@ -426,7 +334,7 @@ index c341741..652f3c5 100644
  /*
     How it works:
     Gets in username (has to be done) from the calling program
-@@ -584,6 +587,11 @@ static int _pam_unix_approve_pass(pam_handle_t * pamh
+@@ -588,6 +591,11 @@ static int _pam_unix_approve_pass(pam_handle_t * pamh
  				return retval;
  			}
  		}
@@ -438,20 +346,28 @@ index c341741..652f3c5 100644
  	}
  	if (remark) {
  		_make_remark(pamh, ctrl, PAM_ERROR_MSG, remark);
-@@ -599,7 +607,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
+@@ -603,7 +611,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
  	int retval;
  	int remember = -1;
  	int rounds = 0;
 -	int pass_min_len = 0;
 +	int pass_min_len = 6;
+ 	struct passwd *pwd;
  
  	/* <DO NOT free() THESE> */
- 	const char *user;
 diff --git a/modules/pam_unix/support.h b/modules/pam_unix/support.h
-index 8105400..91e7478 100644
+index e8f629d..425ff66 100644
 --- a/modules/pam_unix/support.h
 +++ b/modules/pam_unix/support.h
-@@ -101,50 +101,52 @@ typedef struct {
+@@ -6,6 +6,7 @@
+ #define _PAM_UNIX_SUPPORT_H
+ 
+ #include <pwd.h>
++#include "pam_inline.h"
+ 
+ /*
+  * File to read value of ENCRYPT_METHOD from.
+@@ -101,50 +102,52 @@ typedef struct {
  #define UNIX_GOST_YESCRYPT_PASS  31     /* new password hashes will use gost-yescrypt */
  #define UNIX_YESCRYPT_PASS       32     /* new password hashes will use yescrypt */
  #define UNIX_NULLRESETOK         33     /* allow empty password if password reset is enforced */

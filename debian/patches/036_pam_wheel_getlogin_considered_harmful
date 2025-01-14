@@ -12,28 +12,10 @@ Authors: Ben Collins <bcollins@debian.org>
 
 Upstream status: submitted in <20070901175405.GA26092@dario.dodds.net>
 ---
- modules/pam_wheel/README          |  6 ------
  modules/pam_wheel/pam_wheel.8.xml | 17 +--------------
  modules/pam_wheel/pam_wheel.c     | 45 ++++++++-------------------------------
- 3 files changed, 10 insertions(+), 58 deletions(-)
+ 2 files changed, 10 insertions(+), 52 deletions(-)
 
-diff --git a/modules/pam_wheel/README b/modules/pam_wheel/README
-index 5dae4b6..ec9e7d7 100644
---- a/modules/pam_wheel/README
-+++ b/modules/pam_wheel/README
-@@ -39,12 +39,6 @@ trust
-     modules the wheel members may be able to su to root without being prompted
-     for a passwd).
- 
--use_uid
--
--    The check will be done against the real uid of the calling process, instead
--    of trying to obtain the user from the login session associated with the
--    terminal in use.
--
- EXAMPLES
- 
- The root account gains access by default (rootok), only wheel members can
 diff --git a/modules/pam_wheel/pam_wheel.8.xml b/modules/pam_wheel/pam_wheel.8.xml
 index af0fd61..b42e27d 100644
 --- a/modules/pam_wheel/pam_wheel.8.xml
@@ -75,7 +57,7 @@ index af0fd61..b42e27d 100644
 \ No newline at end of file
 +</refentry>
 diff --git a/modules/pam_wheel/pam_wheel.c b/modules/pam_wheel/pam_wheel.c
-index 179f56b..5eb7b82 100644
+index dd047af..93000ce 100644
 --- a/modules/pam_wheel/pam_wheel.c
 +++ b/modules/pam_wheel/pam_wheel.c
 @@ -47,9 +47,8 @@

@@ -5,10 +5,9 @@ Subject: _modules_pam_limits_chroot
 ===================================================================
 ---
  modules/pam_limits/limits.conf       |  2 ++
- modules/pam_limits/limits.conf.5     |  5 +++++
  modules/pam_limits/limits.conf.5.xml |  6 ++++++
- modules/pam_limits/pam_limits.c      | 25 ++++++++++++++++++++++---
- 4 files changed, 35 insertions(+), 3 deletions(-)
+ modules/pam_limits/pam_limits.c      | 26 ++++++++++++++++++++++----
+ 3 files changed, 30 insertions(+), 4 deletions(-)
 
 diff --git a/modules/pam_limits/limits.conf b/modules/pam_limits/limits.conf
 index c6b058a..6b3865c 100644
@@ -30,24 +29,8 @@ index c6b058a..6b3865c 100644
  #@student        -       maxlogins       4
  
  # End of file
-diff --git a/modules/pam_limits/limits.conf.5 b/modules/pam_limits/limits.conf.5
-index 32c4b2f..ce0ca35 100644
---- a/modules/pam_limits/limits.conf.5
-+++ b/modules/pam_limits/limits.conf.5
-@@ -283,6 +283,11 @@ rtprio
- .RS 4
- maximum realtime priority allowed for non\-privileged processes (Linux 2\&.6\&.12 and higher)
- .RE
-+.PP
-+\fBchroot\fR
-+.RS 4
-+the directory to chroot the user to
-+.RE
- .RE
- .PP
- All items support the values
 diff --git a/modules/pam_limits/limits.conf.5.xml b/modules/pam_limits/limits.conf.5.xml
-index 9f2662a..f6f7d87 100644
+index 803cb4e..348758a 100644
 --- a/modules/pam_limits/limits.conf.5.xml
 +++ b/modules/pam_limits/limits.conf.5.xml
 @@ -271,6 +271,12 @@
@@ -64,10 +47,10 @@ index 9f2662a..f6f7d87 100644
          </listitem>
        </varlistentry>
 diff --git a/modules/pam_limits/pam_limits.c b/modules/pam_limits/pam_limits.c
-index 746c441..529d2fc 100644
+index be0b637..5c9cdc8 100644
 --- a/modules/pam_limits/pam_limits.c
 +++ b/modules/pam_limits/pam_limits.c
-@@ -104,6 +104,7 @@ struct pam_limit_s {
+@@ -109,6 +109,7 @@ struct pam_limit_s {
  			      specific user or to count all logins */
      int priority;	 /* the priority to run user process with */
      int nonewprivs;	/* whether to prctl(PR_SET_NO_NEW_PRIVS) */
@@ -75,24 +58,27 @@ index 746c441..529d2fc 100644
      struct user_limits_struct limits[RLIM_NLIMITS];
      const char *conf_file;
      int utmp_after_pam_call;
-@@ -115,6 +116,7 @@ struct pam_limit_s {
+@@ -117,9 +118,9 @@ struct pam_limit_s {
  
- #define LIMIT_PRI RLIM_NLIMITS+3
- #define LIMIT_NONEWPRIVS RLIM_NLIMITS+4
-+#define LIMIT_CHROOT RLIM_NLIMITS+5
+ #define LIMIT_LOGIN (RLIM_NLIMITS+1)
+ #define LIMIT_NUMSYSLOGINS (RLIM_NLIMITS+2)
+-
+ #define LIMIT_PRI (RLIM_NLIMITS+3)
+ #define LIMIT_NONEWPRIVS (RLIM_NLIMITS+4)
++#define LIMIT_CHROOT (RLIM_NLIMITS+5)
  
  #define LIMIT_SOFT  1
  #define LIMIT_HARD  2
-@@ -570,6 +572,8 @@ static int init_limits(pam_handle_t *pamh, struct pam_limit_s *pl, int ctrl)
-     pl->login_limit = -2;
+@@ -652,6 +653,8 @@ static int init_limits(pam_handle_t *pamh, struct pam_limit_s *pl, int ctrl)
      pl->login_limit_def = LIMITS_DEF_NONE;
+     pl->login_group = NULL;
  
 +    pl->chroot_dir[0] = '\0';
 +    
      return retval;
  }
  
-@@ -677,6 +681,8 @@ process_limit (const pam_handle_t *pamh, int source, const char *lim_type,
+@@ -762,6 +765,8 @@ process_limit (const pam_handle_t *pamh, int source, const char *lim_type,
  	limit_item = LIMIT_PRI;
      } else if (strcmp(lim_item, "nonewprivs") == 0) {
  	limit_item = LIMIT_NONEWPRIVS;
@@ -101,7 +87,7 @@ index 746c441..529d2fc 100644
      } else {
          pam_syslog(pamh, LOG_DEBUG, "unknown limit item '%s'", lim_item);
          return;
-@@ -726,9 +732,9 @@ process_limit (const pam_handle_t *pamh, int source, const char *lim_type,
+@@ -811,9 +816,9 @@ process_limit (const pam_handle_t *pamh, int source, const char *lim_type,
  			pam_syslog(pamh, LOG_DEBUG,
  				   "wrong limit value '%s' for limit type '%s'",
  				   lim_value, lim_type);
@@ -113,7 +99,7 @@ index 746c441..529d2fc 100644
  #ifdef __USE_FILE_OFFSET64
  		rlimit_value = strtoull (lim_value, &endptr, 10);
  #else
-@@ -803,7 +809,11 @@ process_limit (const pam_handle_t *pamh, int source, const char *lim_type,
+@@ -888,7 +893,11 @@ process_limit (const pam_handle_t *pamh, int source, const char *lim_type,
  	break;
      }
  
@@ -126,8 +112,8 @@ index 746c441..529d2fc 100644
  	 && (limit_item != LIMIT_NUMSYSLOGINS)
  	 && (limit_item != LIMIT_PRI)
  	 && (limit_item != LIMIT_NONEWPRIVS) ) {
-@@ -1163,6 +1173,15 @@ static int setup_limits(pam_handle_t *pamh,
- 	}
+@@ -1306,6 +1315,15 @@ static int setup_limits(pam_handle_t *pamh,
+ #endif
      }
  
 +    if (!retval && pl->chroot_dir[0]) {

@@ -8,18 +8,18 @@ Subject: pam_mkhomedir_stat_before_opendir
  1 file changed, 7 insertions(+)
 
 diff --git a/modules/pam_mkhomedir/mkhomedir_helper.c b/modules/pam_mkhomedir/mkhomedir_helper.c
-index 3213f02..643d5d0 100644
+index eefb599..fa9089d 100644
 --- a/modules/pam_mkhomedir/mkhomedir_helper.c
 +++ b/modules/pam_mkhomedir/mkhomedir_helper.c
-@@ -39,6 +39,7 @@ create_homedir(const struct passwd *pwd,
-    DIR *d;
+@@ -271,6 +271,7 @@ create_homedir(struct dir_spec *parent, const struct passwd *pwd,
     struct dirent *dent;
+    struct dir_spec base;
     int retval = PAM_SESSION_ERR;
 +   struct stat stat_buf;
  
     /* Create the new directory */
-    if (mkdir(dest, 0700) && errno != EEXIST)
-@@ -54,6 +55,12 @@ create_homedir(const struct passwd *pwd,
+    if (mkdirat(parent->fd, dest, 0700))
+@@ -295,6 +296,12 @@ create_homedir(struct dir_spec *parent, const struct passwd *pwd,
        goto go_out;
     }
  

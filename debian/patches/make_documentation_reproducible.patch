@@ -2,24 +2,58 @@ From: "jumapico@gmail.com" <jumapico@gmail.com>
 Date: Mon, 11 Sep 2023 14:00:42 -0600
 Subject: Make documentation reproducible
 
-Last-Update: 2019-01-06
-
-Add LC_ALL=C.UTF-8 to w3m to avoid changes in the output when build the
+Add LC_ALL=C.UTF-8 to w3m to avoid changes in the output when building the
 documentation with different locales.
+Updated for meson build system.
 ---
- configure.ac | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ doc/guide-meson.build      | 1 +
+ meson.build                | 4 +++-
+ modules/module-meson.build | 1 +
+ 3 files changed, 5 insertions(+), 1 deletion(-)
 
-diff --git a/configure.ac b/configure.ac
-index b9b0f83..5f11912 100644
---- a/configure.ac
-+++ b/configure.ac
-@@ -647,7 +647,7 @@ JH_CHECK_XML_CATALOG([http://docbook.sourceforge.net/release/xsl-ns/current/manp
+diff --git a/doc/guide-meson.build b/doc/guide-meson.build
+index e29d16e..9c40cf0 100644
+--- a/doc/guide-meson.build
++++ b/doc/guide-meson.build
+@@ -50,6 +50,7 @@ custom_target(
+     '@OUTPUT@',
+     browser,
+   ],
++  env:docs_env, 
+   install: true,
+   install_dir: docdir,
+   install_tag: 'doc',
+diff --git a/meson.build b/meson.build
+index 2be2128..871f26a 100644
+--- a/meson.build
++++ b/meson.build
+@@ -473,6 +473,8 @@ endif
  
- AC_PATH_PROG([BROWSER], [w3m])
- if test -n "$BROWSER"; then
--     BROWSER="$BROWSER -T text/html -dump"
-+     BROWSER="LC_ALL=C.UTF-8 $BROWSER -T text/html -dump"
- else
-      AC_PATH_PROG([BROWSER], [elinks])
-      if test -n "$BROWSER"; then
+ feature_docs = get_option('docs')
+ enable_docs = not feature_docs.disabled()
++docs_env = environment()
++docs_env.set('LC_ALL', 'C.UTF-8')
+ if enable_docs
+   prog_xsltproc = find_program(
+     'xsltproc',
+@@ -489,7 +491,7 @@ if enable_docs
+     required: false,
+   )
+   if prog_w3m.found()
+-    browser = [prog_w3m, '-T', 'text/html', '-dump']
++    browser = [ prog_w3m, '-T', 'text/html', '-dump']
+   else
+     prog_elinks = find_program(
+       'elinks',
+diff --git a/modules/module-meson.build b/modules/module-meson.build
+index acb7087..d55dad2 100644
+--- a/modules/module-meson.build
++++ b/modules/module-meson.build
+@@ -245,6 +245,7 @@ custom_target(
+             '@INPUT@',
+             '@OUTPUT@',
+             browser],
++  env:docs_env,
+   install: true,
+   install_dir: docdir / 'modules',
+   install_tag: 'doc',

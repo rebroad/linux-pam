@@ -6,16 +6,18 @@ Patch to implement an @include directive for use in pam.d config files.
 
 Authors: Jan Christoph Nordholz <hesso@pool.math.tu-berlin.de>
 
+Updated for pam 1.7.0 by Sam Hartman <hartmans@debian.org>
+
 Upstream status: not yet submitted
 ---
  libpam/pam_handlers.c | 36 ++++++++++++++++++++++++++++++++----
  1 file changed, 32 insertions(+), 4 deletions(-)
 
 diff --git a/libpam/pam_handlers.c b/libpam/pam_handlers.c
-index 1f1917b..c7045d2 100644
+index 7fd6ce8..1df5e40 100644
 --- a/libpam/pam_handlers.c
 +++ b/libpam/pam_handlers.c
-@@ -123,6 +123,10 @@ static int _pam_parse_conf_file(pam_handle_t *pamh, FILE *f
+@@ -127,6 +127,10 @@ static int _pam_parse_conf_file(pam_handle_t *pamh, FILE *f
  		    module_type = PAM_T_ACCT;
  		} else if (!strcasecmp("password", tok)) {
  		    module_type = PAM_T_PASS;
@@ -25,27 +27,27 @@ index 1f1917b..c7045d2 100644
 +		    goto parsing_done;
  		} else {
  		    /* Illegal module type */
- 		    D(("_pam_init_handlers: bad module type: %s", tok));
-@@ -193,8 +197,10 @@ static int _pam_parse_conf_file(pam_handle_t *pamh, FILE *f
+ 		    D(("bad module type: %s", tok));
+@@ -197,8 +201,10 @@ static int _pam_parse_conf_file(pam_handle_t *pamh, FILE *f
  		_pam_set_default_control(actions, _PAM_ACTION_BAD);
  	    }
  
 +parsing_done:
- 	    tok = _pam_StrTok(NULL, " \n\t", &nexttok);
+ 	    tok = _pam_tokenize(NULL, &nexttok);
  	    if (pam_include) {
 +		struct stat include_dir;
  		if (substack) {
  		    res = _pam_add_handler(pamh, PAM_HT_SUBSTACK, other,
  				stack_level, module_type, actions, tok,
-@@ -205,13 +211,35 @@ static int _pam_parse_conf_file(pam_handle_t *pamh, FILE *f
+@@ -209,13 +215,35 @@ static int _pam_parse_conf_file(pam_handle_t *pamh, FILE *f
  			return PAM_ABORT;
  		    }
  		}
 -		if (_pam_load_conf_file(pamh, tok, this_service, module_type,
--		    stack_level + substack
+-		    include_level + 1, stack_level + substack
 +		if (tok[0] == '/') {
 +		    if (_pam_load_conf_file(pamh, tok, this_service,
-+		                            module_type, stack_level + substack
++		                            module_type, include_level+1, stack_level + substack
 +#ifdef PAM_READ_BOTH_CONFS
 +		                            , !other
 +#endif /* PAM_READ_BOTH_CONFS */
@@ -61,7 +63,7 @@ index 1f1917b..c7045d2 100644
 +			return PAM_ABORT;
 +		    }
 +		    if (_pam_load_conf_file(pamh, include_file, this_service,
-+		                            module_type, stack_level + substack
++		                            module_type, include_level+1, stack_level + substack
  #ifdef PAM_READ_BOTH_CONFS
  					      , !other
  #endif /* PAM_READ_BOTH_CONFS */

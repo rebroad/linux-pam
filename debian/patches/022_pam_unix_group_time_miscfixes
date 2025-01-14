@@ -9,10 +9,10 @@ http://publib.boulder.ibm.com/infocenter/aix/v6r1/index.jsp?topic=%2Fcom.ibm.aix
  1 file changed, 4 insertions(+), 1 deletion(-)
 
 diff --git a/modules/pam_group/pam_group.c b/modules/pam_group/pam_group.c
-index 6877849..7d11f59 100644
+index 21c04d7..7d89dd0 100644
 --- a/modules/pam_group/pam_group.c
 +++ b/modules/pam_group/pam_group.c
-@@ -773,9 +773,12 @@ pam_sm_setcred (pam_handle_t *pamh, int flags,
+@@ -772,9 +772,12 @@ pam_sm_setcred (pam_handle_t *pamh, int flags,
      unsigned setting;
  
      /* only interested in establishing credentials */
