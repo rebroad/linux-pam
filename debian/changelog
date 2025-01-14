@@ -1,8 +1,15 @@
-pam (1.5.3-8) UNRELEASED; urgency=medium
+pam (1.7.0-1) UNRELEASED; urgency=medium
 
+  * New upstream version, Closes: #1088923
+  * Build depend on meson
+  * Depend on fop
+  * Use installed faillock and namespace man page rather than source man page.
+  * Install text module documentation in libpam-doc/txt
+  * Build and install pdf documentation
+  * Remove Steve from uploaders, thanks for all your contributions; you
+	will be missed.
 
-
- -- Sam Hartman <hartmans@debian.org>  Tue, 09 Apr 2024 09:43:48 -0600
+ -- Sam Hartman <hartmans@debian.org>  Tue, 14 Jan 2025 15:47:56 -0700
 
 pam (1.5.3-7) unstable; urgency=medium
 
