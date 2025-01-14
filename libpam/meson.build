@@ -43,7 +43,7 @@ libpam_map_path = meson.current_source_dir() / libpam_map
 libpam_link_deps = [libpam_map]
 libpam_link_args = ['-Wl,--version-script=' + libpam_map_path]
 
-libpam = shared_library(
+libpam = both_libraries(
   'pam',
   sources: libpam_src,
   include_directories: [libpam_inc],
