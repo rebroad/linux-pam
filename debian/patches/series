@@ -16,3 +16,4 @@ lib_security_multiarch_compat
 nullok_secure-compat.patch
 pam_mkhomedir_stat_before_opendir
 0018-Libpam-is-both-shared-and-static.patch
+
