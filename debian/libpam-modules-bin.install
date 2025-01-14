@@ -5,5 +5,4 @@ usr/sbin/pam_namespace_helper
 usr/sbin/pwhistory_helper
 usr/sbin/pam_timestamp_check
 usr/sbin/faillock
-modules/pam_faillock/faillock.8 usr/share/man/man8
 usr/lib/systemd/system/pam_namespace.service
