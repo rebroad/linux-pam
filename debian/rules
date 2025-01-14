@@ -23,21 +23,25 @@ dl = $(d)/local
 
 # avoid libaudit-dev when bootstrapping
 ifneq (,$(filter stage1,$(DEB_BUILD_PROFILES)))
-  CONFIGURE_OPTS += --disable-audit
+  meson_OPTS += -Daudit=disabled
+else
+meson_opts += -Daudit=enabled
 endif
 
-CONFIGURE_OPTS += --enable-logind
+meson_opts += -Dlogind=enabled
+
 
 override_dh_auto_configure:
 	# Explicitly set libdir, sbindir to avoid upstream's override logic.
-	dh_auto_configure -- --enable-static --enable-shared \
+	dh_auto_configure  -- \
+--default-library=both \
 		--libdir=/usr/lib/$(DEB_HOST_MULTIARCH) \
 		--sbindir=/usr/sbin \
-		--enable-isadir=/usr/lib/security \
-		--with-systemdunitdir=/usr/lib/systemd/system \
-		--disable-nis \
-		--enable-usergroups \
-		$(CONFIGURE_OPTS)
+		-Disadir=/usr/lib/security \
+		-Dsystemdunitdir=/usr/lib/systemd/system \
+		-Dnis=disabled \
+		-Dusergroups=true \
+		$(meson_OPTS)
 
 # .install files don't have "except for" handling, so we need to exclude
 # our module that doesn't match right here
