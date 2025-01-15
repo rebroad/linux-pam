@@ -17,4 +17,4 @@ Format: text
 Files: /usr/share/doc/libpam-doc/txt/Linux-PAM_ADG.txt.gz
 
 Format: pdf
-Files: /usr/share/doc/libpam-doc/Linux-PAM_ADG.pdf
+Files: /usr/share/doc/libpam-doc/Linux-PAM_ADG.pdf.gz

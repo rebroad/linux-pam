@@ -14,4 +14,4 @@ Format: text
 Files: /usr/share/doc/libpam-doc/txt/Linux-PAM_SAG.txt.gz
 
 Format: pdf
-Files: /usr/share/doc/libpam-doc/Linux-PAM_SAG.pdf
+Files: /usr/share/doc/libpam-doc/Linux-PAM_SAG.pdf.gz
