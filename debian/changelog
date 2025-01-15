@@ -1,13 +1,14 @@
 pam (1.7.0-1) UNRELEASED; urgency=medium
 
-  * New upstream version, Closes: #1088923
+	* New upstream version, Closes: #1088923
+    - ChangeLog removed upstream, do not install it.
   * Build depend on meson
   * Depend on fop
   * Use installed faillock and namespace man page rather than source man page.
   * Install text module documentation in libpam-doc/txt
   * Build and install pdf documentation
   * Remove Steve from uploaders, thanks for all your contributions; you
-	will be missed.
+        will be missed.
 
  -- Sam Hartman <hartmans@debian.org>  Tue, 14 Jan 2025 15:47:56 -0700
 
