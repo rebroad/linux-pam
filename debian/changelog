@@ -1,6 +1,6 @@
 pam (1.7.0-1) UNRELEASED; urgency=medium
 
-	* New upstream version, Closes: #1088923
+  * New upstream version, Closes: #1088923
     - ChangeLog removed upstream, do not install it.
   * Build depend on meson
   * Depend on fop
@@ -8,7 +8,7 @@ pam (1.7.0-1) UNRELEASED; urgency=medium
   * Install text module documentation in libpam-doc/txt
   * Build and install pdf documentation
   * Remove Steve from uploaders, thanks for all your contributions; you
-        will be missed.
+    will be missed.
 
  -- Sam Hartman <hartmans@debian.org>  Tue, 14 Jan 2025 15:47:56 -0700
 
@@ -40,7 +40,7 @@ pam (1.5.3-5) unstable; urgency=medium
     least until we come up with a better solution this is the least bad option.
   * For now remove libdb-dev so that libdb-dev can undergo time_t
     transition.  That means this version of pam does not include
-    pam_userdb, which makes pam unsuitable for release. 
+    pam_userdb, which makes pam unsuitable for release.
   * Replace/break libpam0t64
 
  -- Sam Hartman <hartmans@debian.org>  Thu, 29 Feb 2024 09:46:54 -0700
@@ -97,7 +97,7 @@ pam (1.5.3-1) experimental; urgency=medium
   * Drop NIS patches and rearrange other patches.
   * Update patch to move pam manpage to section 7: docbook tools now take
     the man page output name from the xml so we need to update the
-    Makefile. 
+    Makefile.
   * Now PAM.7 is actually installed as pam.7 so update packaging
   * pam-auth-update: Session-Interactive-Only set to anything other than
     yes counts as undefined/no, thanks Lucas Nussbaum, Closes: #982309
@@ -113,7 +113,7 @@ pam (1.5.3-1) experimental; urgency=medium
     compatibility with PAM modules still installing into /lib.
     (DEP17 M2) (Closes: #1060160).
   * Update lintian override for setgid binary.
-  
+
  -- Sam Hartman <hartmans@debian.org>  Mon, 15 Jan 2024 15:45:50 -0700
 
 pam (1.5.2-9.1) unstable; urgency=medium
@@ -133,7 +133,7 @@ pam (1.5.2-9) unstable; urgency=low
 
   * Revert 1.5.2-8 upload; as far as I can tell the change is incorrect,
     Closes: #1054493
-  
+
  -- Sam Hartman <hartmans@debian.org>  Tue, 24 Oct 2023 09:19:43 -0600
 
 pam (1.5.2-7) unstable; urgency=medium
@@ -2232,7 +2232,7 @@ pam (0.75-3) experimental; urgency=low
       * In pam_mail, don't complain about deleting environment variable if
     we never set it, Closes: #58429
       * Don't set default max procs limit in pam_limits, Closes: #116874
-        * libpam-runtime now arch all since it has no arch-specific files,
+      * libpam-runtime now arch all since it has no arch-specific files,
     Closes: #132545
       * Update mini policy to reflect confusion on debian-devel
 
