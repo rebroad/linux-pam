@@ -13,6 +13,12 @@ piuparts:
   extends: .test-piuparts
   allow_failure: true
 
+# libpam-doc appears not to be reproducible probably because of the pdfs.
+# ignore for now
+reprotest:
+  extends: .test-reprotest
+  allow_failure: true
+
 # If Salsa CI is not running at
 # https://salsa.debian.org/%{project_path}/-/pipelines, ensure that
 # https://salsa.debian.org/%{project_path}/-/settings/ci_cd has in field "CI/CD
