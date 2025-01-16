@@ -47,10 +47,10 @@ index 803cb4e..348758a 100644
          </listitem>
        </varlistentry>
 diff --git a/modules/pam_limits/pam_limits.c b/modules/pam_limits/pam_limits.c
-index be0b637..5c9cdc8 100644
+index 51fbe02..71e3c9e 100644
 --- a/modules/pam_limits/pam_limits.c
 +++ b/modules/pam_limits/pam_limits.c
-@@ -109,6 +109,7 @@ struct pam_limit_s {
+@@ -108,6 +108,7 @@ struct pam_limit_s {
  			      specific user or to count all logins */
      int priority;	 /* the priority to run user process with */
      int nonewprivs;	/* whether to prctl(PR_SET_NO_NEW_PRIVS) */
@@ -58,7 +58,7 @@ index be0b637..5c9cdc8 100644
      struct user_limits_struct limits[RLIM_NLIMITS];
      const char *conf_file;
      int utmp_after_pam_call;
-@@ -117,9 +118,9 @@ struct pam_limit_s {
+@@ -116,9 +117,9 @@ struct pam_limit_s {
  
  #define LIMIT_LOGIN (RLIM_NLIMITS+1)
  #define LIMIT_NUMSYSLOGINS (RLIM_NLIMITS+2)

@@ -15,7 +15,7 @@ Upstream status: submitted in <20070830171918.GB30563@dario.dodds.net>
  1 file changed, 13 insertions(+), 3 deletions(-)
 
 diff --git a/modules/pam_limits/pam_limits.c b/modules/pam_limits/pam_limits.c
-index 5c9cdc8..47f59ef 100644
+index 71e3c9e..80bcca4 100644
 --- a/modules/pam_limits/pam_limits.c
 +++ b/modules/pam_limits/pam_limits.c
 @@ -1269,9 +1269,19 @@ static int setup_limits(pam_handle_t *pamh,

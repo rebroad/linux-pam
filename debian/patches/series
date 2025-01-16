@@ -3,7 +3,8 @@ make_documentation_reproducible.patch
 022_pam_unix_group_time_miscfixes
 031_pam_include
 036_pam_wheel_getlogin_considered_harmful
-027_pam_limits_better_init_allow_explicit_root
+pam_limits_explicit_root
+pam_limits_fallback_defaults
 pam-limits-nofile-fd-setsize-cap
 032_pam_limits_EPERM_NOT_FATAL
 008_modules_pam_limits_chroot
@@ -16,4 +17,3 @@ lib_security_multiarch_compat
 nullok_secure-compat.patch
 pam_mkhomedir_stat_before_opendir
 0018-Libpam-is-both-shared-and-static.patch
-
