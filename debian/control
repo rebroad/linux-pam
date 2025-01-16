@@ -58,8 +58,8 @@ Priority: required
 Architecture: all
 Multi-Arch: foreign
 Depends: ${misc:Depends}, debconf (>= 1.5.19) | cdebconf, libpam-modules (>= 1.0.1-6)
-Replaces: libpam-modules (<= 1.7.0), libpam-modules-bin (<= 1.7.0)
-Breaks: libpam-modules (<= 1.7.0), libpam-modules-bin (<= 1.7.0)
+Replaces: libpam-modules (<< 1.7.0), libpam-modules-bin (<< 1.7.0)
+Breaks: libpam-modules (<< 1.7.0), libpam-modules-bin (<< 1.7.0)
 Description: Runtime support for the PAM library
  Contains configuration files and  directories required for
  authentication  to work on Debian systems.  This package is required
