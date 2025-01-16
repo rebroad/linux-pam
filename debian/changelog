@@ -2,6 +2,8 @@ pam (1.7.0-1) UNRELEASED; urgency=medium
 
   * New upstream version, Closes: #1088923
     - ChangeLog removed upstream, do not install it.
+    - Upstream claims CVE-2024-10041 is fixed by PAM 1.6.0, Closes:
+      #1086038
   * Build depend on meson
   * Depend on fop
   * Use installed faillock and namespace man page rather than source man page.
@@ -9,8 +11,17 @@ pam (1.7.0-1) UNRELEASED; urgency=medium
   * Build and install pdf documentation
   * Remove Steve from uploaders, thanks for all your contributions; you
     will be missed.
+  * In response to lintian complaint, clarify that PAM can be distributed under any version of the GPL.
+  * Pdf files are compressed; update doc-base
+  * Properly handle environment.5 manpage, Closes: #1081181
+  * Move pam module man pages into libpam-runtime to avoid  multi-arch uninstallability
+  * Move libpam0g-dev man pages into libpam-doc
+  * Build depend on pkgconf rather than pkg-config
+  * Only build-depend on documentation tools for arch-indep builds; do not build docs for arch all builds, Closes: #1093222
+  * pam_limits: do not override systemd's limits by default; add the set_all option to restore previous behavior, Closes: #995236
+  * Document pam_limits change in news
 
- -- Sam Hartman <hartmans@debian.org>  Tue, 14 Jan 2025 15:47:56 -0700
+ -- Sam Hartman <hartmans@debian.org>  Thu, 16 Jan 2025 15:59:23 -0700
 
 pam (1.5.3-7) unstable; urgency=medium
 
