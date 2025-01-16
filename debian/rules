@@ -21,14 +21,15 @@ dl = $(d)/local
 	dh $@
 
 
-# avoid libaudit-dev when bootstrapping
+# avoid libaudit-dev and libsystemd-dev when bootstrapping
 ifneq (,$(filter stage1,$(DEB_BUILD_PROFILES)))
-  meson_OPTS += -Daudit=disabled
-else
-meson_opts += -Daudit=enabled
+  meson_OPTS += -Daudit=disabled -Dlogind=disabled
 endif
+packages := $(shell dh_listpackages)
 
-meson_opts += -Dlogind=enabled
+ifneq (,$(filter libpam-doc libpam-runtime,$(packages)))
+meson_OPTS += -Ddocs=enabled
+endif
 
 
 override_dh_auto_configure:
