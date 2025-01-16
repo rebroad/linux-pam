@@ -47,7 +47,7 @@ index 803cb4e..348758a 100644
          </listitem>
        </varlistentry>
 diff --git a/modules/pam_limits/pam_limits.c b/modules/pam_limits/pam_limits.c
-index 51fbe02..71e3c9e 100644
+index 9f11927..f7487ba 100644
 --- a/modules/pam_limits/pam_limits.c
 +++ b/modules/pam_limits/pam_limits.c
 @@ -108,6 +108,7 @@ struct pam_limit_s {
@@ -69,7 +69,7 @@ index 51fbe02..71e3c9e 100644
  
  #define LIMIT_SOFT  1
  #define LIMIT_HARD  2
-@@ -652,6 +653,8 @@ static int init_limits(pam_handle_t *pamh, struct pam_limit_s *pl, int ctrl)
+@@ -653,6 +654,8 @@ static int init_limits(pam_handle_t *pamh, struct pam_limit_s *pl, int ctrl)
      pl->login_limit_def = LIMITS_DEF_NONE;
      pl->login_group = NULL;
  
@@ -78,7 +78,7 @@ index 51fbe02..71e3c9e 100644
      return retval;
  }
  
-@@ -762,6 +765,8 @@ process_limit (const pam_handle_t *pamh, int source, const char *lim_type,
+@@ -763,6 +766,8 @@ process_limit (const pam_handle_t *pamh, int source, const char *lim_type,
  	limit_item = LIMIT_PRI;
      } else if (strcmp(lim_item, "nonewprivs") == 0) {
  	limit_item = LIMIT_NONEWPRIVS;
@@ -87,7 +87,7 @@ index 51fbe02..71e3c9e 100644
      } else {
          pam_syslog(pamh, LOG_DEBUG, "unknown limit item '%s'", lim_item);
          return;
-@@ -811,9 +816,9 @@ process_limit (const pam_handle_t *pamh, int source, const char *lim_type,
+@@ -812,9 +817,9 @@ process_limit (const pam_handle_t *pamh, int source, const char *lim_type,
  			pam_syslog(pamh, LOG_DEBUG,
  				   "wrong limit value '%s' for limit type '%s'",
  				   lim_value, lim_type);
@@ -99,7 +99,7 @@ index 51fbe02..71e3c9e 100644
  #ifdef __USE_FILE_OFFSET64
  		rlimit_value = strtoull (lim_value, &endptr, 10);
  #else
-@@ -888,7 +893,11 @@ process_limit (const pam_handle_t *pamh, int source, const char *lim_type,
+@@ -889,7 +894,11 @@ process_limit (const pam_handle_t *pamh, int source, const char *lim_type,
  	break;
      }
  
@@ -112,7 +112,7 @@ index 51fbe02..71e3c9e 100644
  	 && (limit_item != LIMIT_NUMSYSLOGINS)
  	 && (limit_item != LIMIT_PRI)
  	 && (limit_item != LIMIT_NONEWPRIVS) ) {
-@@ -1306,6 +1315,15 @@ static int setup_limits(pam_handle_t *pamh,
+@@ -1307,6 +1316,15 @@ static int setup_limits(pam_handle_t *pamh,
  #endif
      }
  

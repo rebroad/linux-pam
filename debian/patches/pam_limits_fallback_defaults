@@ -11,11 +11,11 @@ set_all is no longer the default; kept mainly for non-linux ports.
 
 based on patch by Peter Paluch <peterp@frcatel.fri.utc.sk>
 ---
- modules/pam_limits/pam_limits.c | 74 ++++++++++++++++++++++++++++++++++++++---
- 1 file changed, 70 insertions(+), 4 deletions(-)
+ modules/pam_limits/pam_limits.c | 73 +++++++++++++++++++++++++++++++++++++++--
+ 1 file changed, 70 insertions(+), 3 deletions(-)
 
 diff --git a/modules/pam_limits/pam_limits.c b/modules/pam_limits/pam_limits.c
-index 7eb93c0..749750f 100644
+index 7eb93c0..ca3bb18 100644
 --- a/modules/pam_limits/pam_limits.c
 +++ b/modules/pam_limits/pam_limits.c
 @@ -58,6 +58,14 @@
@@ -52,7 +52,7 @@ index 7eb93c0..749750f 100644
      for(i = 0; i < RLIM_NLIMITS; i++) {
  	int r = getrlimit(i, &pl->limits[i].limit);
  	if (r == -1) {
-@@ -556,19 +571,70 @@ static int init_limits(pam_handle_t *pamh, struct pam_limit_s *pl, int ctrl)
+@@ -556,19 +571,71 @@ static int init_limits(pam_handle_t *pamh, struct pam_limit_s *pl, int ctrl)
  	}
      }
  
@@ -121,7 +121,7 @@ index 7eb93c0..749750f 100644
 +		    break;
 +	    }
  	}
--      }
+       }
      }
 -#endif
  
