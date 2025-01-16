@@ -58,6 +58,14 @@
 # define PR_SET_NO_NEW_PRIVS 38 /* from <linux/prctl.h> */
 #endif
 
+#ifndef MLOCK_LIMIT
+#ifdef __FreeBSD_kernel__
+#define MLOCK_LIMIT RLIM_INFINITY
+#else
+#define MLOCK_LIMIT (64*1024)
+#endif
+#endif
+
 /* Module defines */
 #define LIMITS_DEF_USER     0 /* limit was set by a user entry */
 #define LIMITS_DEF_GROUP    1 /* limit was set by a group entry */
@@ -537,10 +545,17 @@ static int init_limits(pam_handle_t *pamh, struct pam_limit_s *pl, int ctrl)
 {
     int i;
     int retval = PAM_SUCCESS;
+    static int mlock_limit = 0;
 
     D(("called."));
 
     pl->root = 0;
+
+    if (mlock_limit == 0) {
+	mlock_limit = sysconf(_SC_PAGESIZE);
+	if (mlock_limit < MLOCK_LIMIT)
+		mlock_limit = MLOCK_LIMIT;
+    }
 
     for(i = 0; i < RLIM_NLIMITS; i++) {
 	int r = getrlimit(i, &pl->limits[i].limit);
@@ -556,19 +571,71 @@ static int init_limits(pam_handle_t *pamh, struct pam_limit_s *pl, int ctrl)
 	}
     }
 
-#ifdef __linux__
     if (ctrl & PAM_SET_ALL) {
+#ifdef __linux__
       parse_kernel_limits(pamh, pl, ctrl);
+#endif
 
       for(i = 0; i < RLIM_NLIMITS; i++) {
 	if (pl->limits[i].supported &&
 	    (pl->limits[i].src_soft == LIMITS_DEF_NONE ||
 	     pl->limits[i].src_hard == LIMITS_DEF_NONE)) {
-	  pam_syslog(pamh, LOG_WARNING, "Did not find kernel RLIMIT for %s, using PAM default", rlimit2str(i));
+#ifdef __linux__
+	    pam_syslog(pamh, LOG_WARNING, "Did not find kernel RLIMIT for %s, using default", rlimit2str(i));
+#endif
+	    pl->limits[i].src_soft = LIMITS_DEF_DEFAULT;
+	    pl->limits[i].src_hard = LIMITS_DEF_DEFAULT;
+	    switch(i) {
+		case RLIMIT_CPU:
+		case RLIMIT_FSIZE:
+		case RLIMIT_DATA:
+		case RLIMIT_RSS:
+		case RLIMIT_NPROC:
+#ifdef RLIMIT_AS
+		case RLIMIT_AS:
+#endif
+#ifdef RLIMIT_LOCKS
+		case RLIMIT_LOCKS:
+#endif
+		    pl->limits[i].limit.rlim_cur = RLIM_INFINITY;
+		    pl->limits[i].limit.rlim_max = RLIM_INFINITY;
+		    break;
+		case RLIMIT_MEMLOCK:
+		    pl->limits[i].limit.rlim_cur = mlock_limit;
+		    pl->limits[i].limit.rlim_max = mlock_limit;
+		    break;
+#ifdef RLIMIT_SIGPENDING
+		case RLIMIT_SIGPENDING:
+		    pl->limits[i].limit.rlim_cur = 16382;
+		    pl->limits[i].limit.rlim_max = 16382;
+		    break;
+#endif
+#ifdef RLIMIT_MSGQUEUE
+		case RLIMIT_MSGQUEUE:
+		    pl->limits[i].limit.rlim_cur = 819200;
+		    pl->limits[i].limit.rlim_max = 819200;
+		    break;
+#endif
+		case RLIMIT_CORE:
+		    pl->limits[i].limit.rlim_cur = 0;
+		    pl->limits[i].limit.rlim_max = RLIM_INFINITY;
+		    break;
+		case RLIMIT_STACK:
+		    pl->limits[i].limit.rlim_cur = 8192*1024;
+		    pl->limits[i].limit.rlim_max = RLIM_INFINITY;
+		    break;
+		case RLIMIT_NOFILE:
+		    pl->limits[i].limit.rlim_cur = 1024;
+		    pl->limits[i].limit.rlim_max = 1024;
+		    break;
+		default:
+		    pl->limits[i].src_soft = LIMITS_DEF_NONE;
+		    pl->limits[i].src_hard = LIMITS_DEF_NONE;
+		    break;
+	    }
 	}
       }
     }
-#endif
 
     errno = 0;
     pl->priority = getpriority (PRIO_PROCESS, 0);
