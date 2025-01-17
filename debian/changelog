@@ -1,4 +1,4 @@
-pam (1.7.0-1) UNRELEASED; urgency=medium
+pam (1.7.0-1) experimental; urgency=medium
 
   * New upstream version, Closes: #1088923
     - ChangeLog removed upstream, do not install it.
