@@ -1,12 +1,12 @@
 pam (1.7.0-1) unstable; urgency=medium
 
     Starting with pam 1.7.0, pam_limits does not automatically reset the
-    limits of logged in users. This means that systemd, rather than pam ill
+    limits of logged in users. This means that systemd, rather than pam will
     set the defaults for things like number of open files and other resource
     limits. If limits are configured in /etc/security/limits.conf or
     /etc/security/limits.d/*.conf, these values will be respected. To
-  restore the previous behavior, add the set_all option to pam_limits.
-  For example in /etc/pam.d/ssh, replace:
+    restore the previous behavior, add the set_all option to pam_limits.
+    For example in /etc/pam.d/ssh, replace:
 
     session    required     pam_limits.so
 
