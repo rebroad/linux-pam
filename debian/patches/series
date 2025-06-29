@@ -20,3 +20,4 @@ upstream/0019-pam_inline-introduce-pam_asprintf-pam_snprintf-and-p.patch
 upstream/0020-pam_namespace-from-v1.7.1.patch
 0001-pam_access-fix-group-name-match-regression.patch
 upstream/0022-pam_access-rework-resolving-of-tokens-as-hostname.patch
+0023-Reapply-man-page-section-changes-after-importing-1.7.patch
