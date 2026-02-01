@@ -498,8 +498,13 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 			case FAILLOCK_ACTION_AUTHFAIL:
 				rv = check_tally(pamh, &opts, &tallies, &fd);
 				if (rv == PAM_SUCCESS) {
+					const void *unix_ret_p = NULL;
 					rv = PAM_IGNORE; /* this return value should be ignored */
-					write_tally(pamh, &opts, &tallies, &fd);
+					if (pam_get_data(pamh, "unix_setcred_return", &unix_ret_p) != PAM_SUCCESS
+					    || unix_ret_p == NULL
+					    || *(const int *)unix_ret_p != PAM_CONV_ERR) {
+						write_tally(pamh, &opts, &tallies, &fd);
+					}
 				}
 				break;
 		}
